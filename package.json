@@ -1,0 +1,29 @@
+{
+  "name": "hotel-restaurant-pos-monorepo",
+  "version": "1.0.0",
+  "description": "Fullstack Hotel & Restaurant POS, Kitchen Display System & Contactless QR Menu Platform",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix server & npm run dev --prefix client",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "install:all": "npm install --prefix server && npm install --prefix client",
+    "build:server": "npm run build --prefix server",
+    "build:client": "npm run build --prefix client",
+    "build": "npm run build:server && npm run build:client"
+  },
+  "keywords": [
+    "pos",
+    "restaurant-pos",
+    "hotel-pos",
+    "qr-menu",
+    "nextjs",
+    "express",
+    "supabase",
+    "redux-toolkit",
+    "tanstack-query",
+    "tailwind"
+  ],
+  "author": "Antigravity",
+  "license": "MIT"
+}
