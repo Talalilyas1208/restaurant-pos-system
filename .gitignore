@@ -9,12 +9,13 @@ out/
 build/
 dist/
 
-# Environment Variables
+# Environment Variables — never commit real secrets
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
+*/.env
+*/.env.*
+!*/.env.example
 
 # Logs
 npm-debug.log*
