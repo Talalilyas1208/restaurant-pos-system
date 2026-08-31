@@ -1,7 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Users, Split } from 'lucide-react';
+import { Modal, Segmented, Statistic, Card, Button, Typography, Space, Divider } from 'antd';
+import { UsergroupAddOutlined, SplitCellsOutlined, CheckOutlined } from '@ant-design/icons';
+
+const { Title, Text } = Typography;
 
 interface SplitBillModalProps {
   isOpen: boolean;
@@ -18,9 +21,7 @@ export default function SplitBillModal({
   currencySymbol = '$',
   onSettleSplit,
 }: SplitBillModalProps) {
-  const [splitCount, setSplitCount] = useState(2);
-  const [customSplits, setCustomSplits] = useState<number[]>([]);
-  const [mode, setMode] = useState<'equal' | 'custom'>('equal');
+  const [splitCount, setSplitCount] = useState<number>(2);
 
   if (!isOpen) return null;
 
@@ -33,88 +34,88 @@ export default function SplitBillModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col text-slate-100">
-        {/* Header */}
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-orange-400">
-            <Split className="w-5 h-5" />
-            <span className="font-semibold text-base">Split Bill Calculation</span>
+    <Modal
+      open={isOpen}
+      onCancel={onClose}
+      footer={null}
+      width={460}
+      centered
+      title={
+        <div className="flex items-center gap-2 text-orange-400">
+          <SplitCellsOutlined className="text-xl" />
+          <span className="font-bold text-base text-slate-100">Split Bill Calculation</span>
+        </div>
+      }
+    >
+      <div className="space-y-5 pt-2">
+        {/* Total Bill Card */}
+        <Card className="!bg-slate-900 !border-slate-800 text-center">
+          <Statistic
+            title={<Text className="!text-slate-400 !text-xs uppercase tracking-wider">Total Bill Amount</Text>}
+            value={totalAmount}
+            precision={2}
+            prefix={currencySymbol}
+            valueStyle={{ color: '#f97316', fontWeight: 'bold', fontSize: '2rem' }}
+          />
+        </Card>
+
+        {/* Split Count Selector */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <UsergroupAddOutlined className="text-orange-400" /> Split Between Diners
+            </span>
+            <span className="text-xs text-orange-400 font-bold">{splitCount} People</span>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white"
-          >
-            <X className="w-5 h-5" />
-          </button>
+
+          <Segmented
+            block
+            size="large"
+            value={splitCount}
+            onChange={(val) => setSplitCount(Number(val))}
+            options={[
+              { label: '2 Ways', value: 2 },
+              { label: '3 Ways', value: 3 },
+              { label: '4 Ways', value: 4 },
+              { label: '5 Ways', value: 5 },
+              { label: '6 Ways', value: 6 },
+            ]}
+            className="!bg-slate-900 !p-1.5 !rounded-xl !border !border-slate-800"
+          />
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          <div className="bg-slate-800/80 p-4 rounded-xl border border-slate-700/60 text-center">
-            <span className="text-xs text-slate-400 uppercase tracking-wider">Total Bill Amount</span>
-            <div className="text-3xl font-bold text-white pt-1">
-              {currencySymbol}
-              {totalAmount.toFixed(2)}
-            </div>
+        {/* Equal Share Result */}
+        <div className="bg-orange-500/10 border border-orange-500/30 p-4 rounded-2xl space-y-1">
+          <div className="flex items-center justify-between text-xs text-slate-300">
+            <span>Each Person&apos;s Share:</span>
+            <span className="bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-full font-semibold">
+              Equal Division
+            </span>
           </div>
-
-          {/* Equal split selector */}
-          <div className="space-y-3">
-            <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-              <Users className="w-4 h-4 text-orange-400" />
-              <span>Split Between People</span>
-            </label>
-            <div className="grid grid-cols-5 gap-2">
-              {[2, 3, 4, 5, 6].map((num) => (
-                <button
-                  key={num}
-                  type="button"
-                  onClick={() => setSplitCount(num)}
-                  className={`py-3 rounded-xl font-bold text-base transition-all border ${
-                    splitCount === num
-                      ? 'bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20'
-                      : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
-                  }`}
-                >
-                  {num}x
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Result Card */}
-          <div className="bg-orange-500/10 border border-orange-500/30 p-4 rounded-xl space-y-2">
-            <div className="flex items-center justify-between text-sm text-slate-300">
-              <span>Each Person Pays:</span>
-              <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full font-medium">
-                {splitCount} Equal Parts
-              </span>
-            </div>
-            <div className="text-2xl font-bold text-orange-400">
-              {currencySymbol}
-              {equalShare.toFixed(2)}{' '}
-              <span className="text-xs text-slate-400 font-normal">/ person</span>
-            </div>
+          <div className="text-2xl font-black text-orange-400">
+            {currencySymbol}
+            {equalShare.toFixed(2)}{' '}
+            <span className="text-xs font-normal text-slate-400">/ person</span>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-slate-800 bg-slate-900/90 flex items-center justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 text-sm font-medium"
-          >
+        <Divider className="!border-slate-800 !my-3" />
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-3 pt-1">
+          <Button onClick={onClose} className="!h-10 !px-5 !rounded-xl !border-slate-700 !text-slate-300">
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            type="primary"
+            icon={<CheckOutlined />}
             onClick={handleEqualSettle}
-            className="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm shadow-lg shadow-orange-500/25 transition-all"
+            className="!h-10 !px-6 !rounded-xl !bg-orange-500 !font-semibold !shadow-lg !shadow-orange-500/25"
           >
-            Accept & Proceed
-          </button>
+            Accept & Settle
+          </Button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

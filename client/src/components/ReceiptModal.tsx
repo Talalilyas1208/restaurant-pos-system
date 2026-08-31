@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Order, Hotel } from '../types';
-import { Printer, X, CheckCircle2 } from 'lucide-react';
+import { Modal, Button, Tag, Divider, Space } from 'antd';
+import { PrinterOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { QRCodeSVG } from 'qrcode.react';
+import { Order, Hotel } from '../types';
 
 interface ReceiptModalProps {
   order: Order | null;
@@ -34,24 +35,22 @@ export default function ReceiptModal({
   const currencySymbol = hotel?.currencySymbol || '$';
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col max-h-[90vh] text-slate-100">
-        {/* Header */}
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-emerald-400">
-            <CheckCircle2 className="w-5 h-5" />
-            <span className="font-semibold text-sm">Payment Successful</span>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white"
-          >
-            <X className="w-5 h-5" />
-          </button>
+    <Modal
+      open={isOpen}
+      onCancel={onClose}
+      footer={null}
+      width={450}
+      centered
+      title={
+        <div className="flex items-center gap-2 text-emerald-400">
+          <CheckCircleOutlined className="text-xl" />
+          <span className="font-bold text-base text-slate-100">Payment Completed Successfully</span>
         </div>
-
-        {/* Receipt Body (The part styled for 80mm thermal receipt) */}
-        <div className="p-6 overflow-y-auto bg-white text-black font-mono text-xs space-y-4">
+      }
+    >
+      <div className="space-y-4 pt-2">
+        {/* Printable 80mm Thermal Receipt Canvas */}
+        <div className="p-6 bg-white text-black font-mono text-xs rounded-2xl shadow-inner max-h-[60vh] overflow-y-auto">
           <div id="thermal-receipt" className="space-y-3 text-center">
             {/* Business Header */}
             <div>
@@ -61,7 +60,7 @@ export default function ReceiptModal({
               <div className="border-b border-dashed border-gray-400 my-2" />
             </div>
 
-            {/* Order Meta */}
+            {/* Order Metadata */}
             <div className="text-left space-y-0.5 text-[11px]">
               <div className="flex justify-between">
                 <span>Order No:</span>
@@ -72,15 +71,15 @@ export default function ReceiptModal({
                 <span className="font-bold">{order.tableNumber || 'Takeaway'}</span>
               </div>
               <div className="flex justify-between">
-                <span>Guest:</span>
+                <span>Guest Name:</span>
                 <span>{order.customerName}</span>
               </div>
               <div className="flex justify-between">
-                <span>Date:</span>
+                <span>Date & Time:</span>
                 <span>{new Date(order.createdAt).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span>Server:</span>
+                <span>Server ID:</span>
                 <span>{order.serverStaffId || 'Terminal #1'}</span>
               </div>
             </div>
@@ -157,14 +156,14 @@ export default function ReceiptModal({
               )}
               <div className="border-b border-double border-gray-500 my-1" />
               <div className="flex justify-between font-bold text-sm">
-                <span>TOTAL AMOUNT:</span>
+                <span>TOTAL PAID:</span>
                 <span>
                   {currencySymbol}
                   {order.total.toFixed(2)}
                 </span>
               </div>
-              <div className="flex justify-between text-gray-700">
-                <span>Payment Method:</span>
+              <div className="flex justify-between text-gray-700 pt-1">
+                <span>Method:</span>
                 <span className="uppercase font-semibold">{paymentMethod}</span>
               </div>
               {tenderedAmount !== undefined && (
@@ -189,38 +188,36 @@ export default function ReceiptModal({
 
             <div className="border-b border-dashed border-gray-400 my-2" />
 
-            {/* QR Code on Receipt for feedback & e-invoice */}
+            {/* QR Code */}
             <div className="flex flex-col items-center justify-center pt-1 space-y-1">
               <QRCodeSVG
                 value={`https://grandhorizon.com/invoice/${order.orderNumber}`}
-                size={70}
+                size={75}
                 bgColor="#ffffff"
                 fgColor="#000000"
                 level="L"
               />
-              <p className="text-[9px] text-gray-500">Scan for e-invoice & loyalty points</p>
-              <p className="text-[10px] font-semibold tracking-wider pt-1">THANK YOU FOR DINING WITH US!</p>
+              <p className="text-[9px] text-gray-500">Scan for e-invoice & guest feedback</p>
+              <p className="text-[10px] font-bold tracking-wider pt-1">THANK YOU FOR DINING WITH US!</p>
             </div>
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 border-t border-slate-800 bg-slate-900 flex items-center justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 text-sm font-medium"
-          >
+        <div className="flex items-center justify-end gap-3 pt-2">
+          <Button onClick={onClose} className="!h-10 !px-5 !rounded-xl !border-slate-700 !text-slate-300">
             Close
-          </button>
-          <button
+          </Button>
+          <Button
+            type="primary"
+            icon={<PrinterOutlined />}
             onClick={handlePrint}
-            className="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm flex items-center gap-2 shadow-lg shadow-orange-500/25"
+            className="!h-10 !px-6 !rounded-xl !bg-orange-500 !font-semibold !shadow-lg !shadow-orange-500/25"
           >
-            <Printer className="w-4 h-4" />
-            <span>Print Receipt</span>
-          </button>
+            Print Receipt
+          </Button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
