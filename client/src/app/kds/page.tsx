@@ -2,20 +2,33 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  Card,
+  Badge,
+  Tag,
+  Button,
+  Switch,
+  Segmented,
+  Space,
+  Typography,
+  Divider,
+  message,
+  Tooltip,
+} from 'antd';
+import {
+  FireOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined,
+  PlayCircleOutlined,
+  RollbackOutlined,
+  SoundOutlined,
+  ReloadOutlined,
+} from '@ant-design/icons';
+import { ChefHat } from 'lucide-react';
 import { api } from '../../lib/api';
 import { Order, OrderStatus } from '../../types';
-import {
-  ChefHat,
-  Clock,
-  CheckCircle2,
-  Play,
-  RotateCcw,
-  Volume2,
-  VolumeX,
-  Sparkles,
-  AlertTriangle,
-  RefreshCw,
-} from 'lucide-react';
+
+const { Title, Text } = Typography;
 
 export default function KitchenDisplayPage() {
   const queryClient = useQueryClient();
@@ -23,7 +36,6 @@ export default function KitchenDisplayPage() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [now, setNow] = useState(Date.now());
 
-  // Update clock every 10s for elapsed time indicators
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 10000);
     return () => clearInterval(timer);
@@ -32,13 +44,14 @@ export default function KitchenDisplayPage() {
   const { data: orders = [], refetch, isFetching } = useQuery({
     queryKey: ['orders'],
     queryFn: () => api.getOrders(),
-    refetchInterval: 8000, // Real-time poll every 8 seconds
+    refetchInterval: 8000,
   });
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: OrderStatus }) =>
       api.updateOrderStatus(id, status),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      message.success(`Ticket status updated to ${variables.status}`);
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['tables'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
@@ -66,7 +79,7 @@ export default function KitchenDisplayPage() {
 
   return (
     <div className="flex-1 bg-slate-950 text-slate-100 flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
-      {/* KDS Header Bar */}
+      {/* KDS Header */}
       <div className="p-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-orange-400">
@@ -75,60 +88,57 @@ export default function KitchenDisplayPage() {
           <div>
             <h1 className="font-bold text-lg text-white flex items-center gap-2">
               Kitchen Display System (KDS)
-              <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/30">
+              <Tag color="orange" className="!font-bold">
                 {activeOrders.length} Active Tickets
-              </span>
+              </Tag>
             </h1>
-            <p className="text-xs text-slate-400">Live Kitchen Line & Ticket Manager</p>
+            <p className="text-xs text-slate-400">Live Kitchen Line & Ticket Flow Manager</p>
           </div>
         </div>
 
         {/* Filter & Controls */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center bg-slate-800 rounded-xl p-1 text-xs">
-            {['all', 'dine_in', 'room_service', 'takeaway'].map((type) => (
-              <button
-                key={type}
-                onClick={() => setFilterType(type)}
-                className={`px-3 py-1.5 rounded-lg capitalize transition-all ${
-                  filterType === type
-                    ? 'bg-orange-500 text-white font-bold shadow'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                {type.replace('_', ' ')}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            size="middle"
+            value={filterType}
+            onChange={(val) => setFilterType(val as string)}
+            options={[
+              { label: 'All', value: 'all' },
+              { label: 'Dine In', value: 'dine_in' },
+              { label: 'Room Service', value: 'room_service' },
+              { label: 'Takeaway', value: 'takeaway' },
+            ]}
+            className="!bg-slate-800 !p-1 !rounded-xl"
+          />
 
-          <button
+          <Button
+            shape="circle"
+            icon={<ReloadOutlined spin={isFetching} />}
             onClick={() => refetch()}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
-            title="Refresh Tickets"
-          >
-            <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin text-orange-400' : ''}`} />
-          </button>
+            className="!bg-slate-800 !border-slate-700 !text-slate-300"
+          />
 
-          <button
-            onClick={() => setSoundEnabled(!soundEnabled)}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
-            title="Toggle Alert Sounds"
-          >
-            {soundEnabled ? <Volume2 className="w-4 h-4 text-emerald-400" /> : <VolumeX className="w-4 h-4 text-slate-500" />}
-          </button>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-300">
+            <SoundOutlined className={soundEnabled ? 'text-emerald-400' : 'text-slate-500'} />
+            <Switch
+              size="small"
+              checked={soundEnabled}
+              onChange={(val) => setSoundEnabled(val)}
+            />
+          </div>
         </div>
       </div>
 
       {/* Kanban Ticket Columns */}
       <div className="flex-1 p-4 grid grid-cols-1 md:grid-cols-3 gap-4 overflow-hidden">
         {/* COLUMN 1: PENDING / NEW */}
-        <div className="flex flex-col bg-slate-900/60 rounded-2xl border border-amber-500/30 overflow-hidden">
+        <div className="flex flex-col bg-slate-900/70 rounded-2xl border border-amber-500/30 overflow-hidden shadow-xl">
           <div className="p-3.5 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between">
             <span className="font-bold text-sm text-amber-400 flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />
+              <Badge status="processing" color="#f59e0b" />
               1. NEW TICKETS ({pendingOrders.length})
             </span>
-            <span className="text-xs text-amber-300 font-mono">Action Required</span>
+            <Tag color="warning" className="!m-0 font-semibold text-[11px]">Action Required</Tag>
           </div>
 
           <div className="flex-1 p-3 overflow-y-auto space-y-3">
@@ -142,16 +152,17 @@ export default function KitchenDisplayPage() {
                 const isOverdue = elapsed >= 15;
 
                 return (
-                  <div
+                  <Card
                     key={order.id}
-                    className={`rounded-2xl p-4 border shadow-lg space-y-3 transition-all ${
+                    className={`!rounded-2xl shadow-lg transition-all ${
                       isOverdue
-                        ? 'bg-rose-950/40 border-rose-500 text-rose-100 animate-pulse'
-                        : 'bg-slate-900 border-amber-500/40 text-slate-100'
+                        ? '!bg-rose-950/40 !border-rose-500 animate-pulse'
+                        : '!bg-slate-900 !border-amber-500/40'
                     }`}
+                    bodyStyle={{ padding: '16px' }}
                   >
                     {/* Header */}
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
                       <div>
                         <div className="font-black text-base text-white">{order.orderNumber}</div>
                         <span className="text-xs text-orange-400 font-bold">
@@ -160,11 +171,10 @@ export default function KitchenDisplayPage() {
                       </div>
 
                       <div className="text-right">
-                        <div className="flex items-center gap-1 text-xs font-mono font-bold text-amber-400">
-                          <Clock className="w-3.5 h-3.5" />
-                          <span>{elapsed} min ago</span>
-                        </div>
-                        <span className="text-[10px] text-slate-400 uppercase">{order.source}</span>
+                        <Tag color={isOverdue ? 'error' : 'warning'} className="!font-mono !font-bold">
+                          <ClockCircleOutlined className="mr-1" /> {elapsed}m ago
+                        </Tag>
+                        <div className="text-[10px] text-slate-400 uppercase mt-0.5">{order.source}</div>
                       </div>
                     </div>
 
@@ -174,17 +184,17 @@ export default function KitchenDisplayPage() {
                         <div key={idx} className="space-y-0.5">
                           <div className="flex justify-between font-semibold">
                             <span className="text-slate-100">
-                              <span className="text-amber-400 font-bold mr-1">{item.quantity}x</span>{' '}
+                              <span className="text-amber-400 font-bold mr-1.5">{item.quantity}x</span>{' '}
                               {item.name}
                             </span>
                           </div>
                           {item.selectedModifiers && item.selectedModifiers.length > 0 && (
-                            <p className="text-[11px] text-orange-300 pl-4">
+                            <p className="text-[11px] text-orange-300 pl-4 !m-0">
                               {item.selectedModifiers.map((m) => m.optionName).join(', ')}
                             </p>
                           )}
                           {item.specialInstructions && (
-                            <p className="text-[11px] text-amber-300 italic pl-4">
+                            <p className="text-[11px] text-amber-300 italic pl-4 !m-0">
                               Note: {item.specialInstructions}
                             </p>
                           )}
@@ -192,22 +202,22 @@ export default function KitchenDisplayPage() {
                       ))}
                     </div>
 
-                    {/* Customer Notes */}
                     {order.customerNotes && (
-                      <div className="text-[11px] bg-slate-800/80 p-2 rounded-lg text-amber-300 italic">
+                      <div className="text-[11px] bg-slate-800/80 p-2 rounded-lg text-amber-300 italic mt-2">
                         &ldquo;{order.customerNotes}&rdquo;
                       </div>
                     )}
 
-                    {/* Action Button */}
-                    <button
+                    <Button
+                      type="primary"
+                      block
+                      icon={<PlayCircleOutlined />}
                       onClick={() => handleUpdateStatus(order.id, 'preparing')}
-                      className="w-full py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-xs text-white shadow-md flex items-center justify-center gap-2 transition-colors"
+                      className="!mt-3 !h-9 !rounded-xl !bg-blue-600 hover:!bg-blue-500 !font-bold !shadow-md"
                     >
-                      <Play className="w-3.5 h-3.5" />
-                      <span>Start Preparing</span>
-                    </button>
-                  </div>
+                      Start Preparing
+                    </Button>
+                  </Card>
                 );
               })
             )}
@@ -215,19 +225,19 @@ export default function KitchenDisplayPage() {
         </div>
 
         {/* COLUMN 2: IN PREPARATION */}
-        <div className="flex flex-col bg-slate-900/60 rounded-2xl border border-blue-500/30 overflow-hidden">
+        <div className="flex flex-col bg-slate-900/70 rounded-2xl border border-blue-500/30 overflow-hidden shadow-xl">
           <div className="p-3.5 bg-blue-500/10 border-b border-blue-500/20 flex items-center justify-between">
             <span className="font-bold text-sm text-blue-400 flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+              <Badge status="processing" color="#3b82f6" />
               2. COOKING ON LINE ({preparingOrders.length})
             </span>
-            <span className="text-xs text-blue-300 font-mono">In Kitchen</span>
+            <Tag color="processing" className="!m-0 font-semibold text-[11px]">In Kitchen</Tag>
           </div>
 
           <div className="flex-1 p-3 overflow-y-auto space-y-3">
             {preparingOrders.length === 0 ? (
               <div className="h-40 flex items-center justify-center text-xs text-slate-500 italic">
-                No orders currently in preparation
+                No orders currently cooking
               </div>
             ) : (
               preparingOrders.map((order) => {
@@ -235,59 +245,54 @@ export default function KitchenDisplayPage() {
                 const isOverdue = elapsed >= 20;
 
                 return (
-                  <div
+                  <Card
                     key={order.id}
-                    className={`rounded-2xl p-4 border shadow-lg space-y-3 ${
+                    className={`!rounded-2xl shadow-lg ${
                       isOverdue
-                        ? 'bg-rose-950/40 border-rose-500 text-rose-100 animate-pulse'
-                        : 'bg-slate-900 border-blue-500/40 text-slate-100'
+                        ? '!bg-rose-950/40 !border-rose-500 animate-pulse'
+                        : '!bg-slate-900 !border-blue-500/40'
                     }`}
+                    bodyStyle={{ padding: '16px' }}
                   >
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
                       <div>
                         <div className="font-black text-base text-white">{order.orderNumber}</div>
                         <span className="text-xs text-blue-400 font-bold">
                           {order.tableNumber || 'Takeaway'}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1 text-xs font-mono font-bold text-blue-300">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>{elapsed} mins</span>
-                      </div>
+                      <Tag color="processing" className="!font-mono !font-bold">
+                        <ClockCircleOutlined className="mr-1" /> {elapsed}m
+                      </Tag>
                     </div>
 
                     <div className="space-y-1.5 text-xs">
                       {order.items.map((item, idx) => (
-                        <div key={idx} className="space-y-0.5">
-                          <div className="font-semibold text-slate-100">
-                            <span className="text-blue-400 font-bold mr-1">{item.quantity}x</span>{' '}
-                            {item.name}
-                          </div>
-                          {item.selectedModifiers && item.selectedModifiers.length > 0 && (
-                            <p className="text-[11px] text-slate-300 pl-4">
-                              {item.selectedModifiers.map((m) => m.optionName).join(', ')}
-                            </p>
-                          )}
+                        <div key={idx}>
+                          <span className="text-blue-400 font-bold mr-1.5">{item.quantity}x</span>{' '}
+                          {item.name}
                         </div>
                       ))}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      <button
+                    <div className="grid grid-cols-2 gap-2 mt-3">
+                      <Button
+                        icon={<RollbackOutlined />}
                         onClick={() => handleUpdateStatus(order.id, 'pending')}
-                        className="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium"
+                        className="!rounded-xl !bg-slate-800 !border-slate-700 !text-slate-300"
                       >
                         Back
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        type="primary"
+                        icon={<CheckCircleOutlined />}
                         onClick={() => handleUpdateStatus(order.id, 'ready')}
-                        className="py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md flex items-center justify-center gap-1"
+                        className="!rounded-xl !bg-emerald-600 hover:!bg-emerald-500 !font-bold !shadow-md"
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Mark Ready</span>
-                      </button>
+                        Mark Ready
+                      </Button>
                     </div>
-                  </div>
+                  </Card>
                 );
               })
             )}
@@ -295,54 +300,57 @@ export default function KitchenDisplayPage() {
         </div>
 
         {/* COLUMN 3: READY FOR SERVING */}
-        <div className="flex flex-col bg-slate-900/60 rounded-2xl border border-emerald-500/30 overflow-hidden">
+        <div className="flex flex-col bg-slate-900/70 rounded-2xl border border-emerald-500/30 overflow-hidden shadow-xl">
           <div className="p-3.5 bg-emerald-500/10 border-b border-emerald-500/20 flex items-center justify-between">
             <span className="font-bold text-sm text-emerald-400 flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              3. READY FOR SERVER / RUNNER ({readyOrders.length})
+              <Badge status="success" color="#10b981" />
+              3. READY FOR SERVER ({readyOrders.length})
             </span>
-            <span className="text-xs text-emerald-300 font-mono">Pass Table</span>
+            <Tag color="success" className="!m-0 font-semibold text-[11px]">Pass Table</Tag>
           </div>
 
           <div className="flex-1 p-3 overflow-y-auto space-y-3">
             {readyOrders.length === 0 ? (
               <div className="h-40 flex items-center justify-center text-xs text-slate-500 italic">
-                No orders ready for pickup
+                No orders waiting for pickup
               </div>
             ) : (
               readyOrders.map((order) => (
-                <div
+                <Card
                   key={order.id}
-                  className="rounded-2xl p-4 border border-emerald-500/40 bg-slate-900 shadow-lg space-y-3"
+                  className="!bg-slate-900 !border-emerald-500/40 !rounded-2xl shadow-lg"
+                  bodyStyle={{ padding: '16px' }}
                 >
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
                     <div>
                       <div className="font-black text-base text-white">{order.orderNumber}</div>
                       <span className="text-xs text-emerald-400 font-bold">
                         {order.tableNumber || 'Takeaway'}
                       </span>
                     </div>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold">
+                    <Tag color="success" className="!font-bold">
                       Ready to Serve
-                    </span>
+                    </Tag>
                   </div>
 
                   <div className="space-y-1 text-xs text-slate-300">
                     {order.items.map((item, idx) => (
                       <div key={idx}>
-                        <span className="font-bold text-white">{item.quantity}x</span> {item.name}
+                        <span className="font-bold text-white mr-1.5">{item.quantity}x</span>{' '}
+                        {item.name}
                       </div>
                     ))}
                   </div>
 
-                  <button
+                  <Button
+                    block
+                    icon={<CheckCircleOutlined className="text-emerald-400" />}
                     onClick={() => handleUpdateStatus(order.id, 'completed')}
-                    className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-semibold text-xs border border-slate-700 flex items-center justify-center gap-1.5 transition-colors"
+                    className="!mt-3 !h-9 !rounded-xl !bg-slate-800 !border-slate-700 !text-slate-200 hover:!text-white !font-semibold"
                   >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span>Complete & Clear Ticket</span>
-                  </button>
-                </div>
+                    Complete & Clear Ticket
+                  </Button>
+                </Card>
               ))
             )}
           </div>
