@@ -3,25 +3,39 @@
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  Steps,
+  Segmented,
+  Drawer,
+  Button,
+  Tag,
+  Badge,
+  Card,
+  Input,
+  Space,
+  Typography,
+  Divider,
+  FloatButton,
+  message,
+} from 'antd';
+import {
+  ShoppingCartOutlined,
+  PlusOutlined,
+  MinusOutlined,
+  DeleteOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  FireOutlined,
+  SmileOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
+import { Utensils, Leaf, Sparkles, Flame } from 'lucide-react';
 import { api } from '../../../../lib/api';
 import { MenuItem, SelectedModifier, Order } from '../../../../types';
 import ItemModifierModal from '../../../../components/ItemModifierModal';
-import {
-  Utensils,
-  ShoppingBag,
-  Sparkles,
-  Flame,
-  Leaf,
-  Plus,
-  Minus,
-  Check,
-  Clock,
-  ChevronRight,
-  X,
-  ChefHat,
-  BellRing,
-  Info,
-} from 'lucide-react';
+
+const { Title, Text, Paragraph } = Typography;
+const { TextArea } = Input;
 
 interface LocalCartItem {
   id: string;
@@ -72,12 +86,12 @@ export default function CustomerQRMenuPage() {
     queryFn: () => api.getMenuItems(),
   });
 
-  // Track live order status if order was placed
+  // Track live order status
   const { data: liveOrder } = useQuery({
     queryKey: ['order', activePlacedOrder?.id],
     queryFn: () => (activePlacedOrder?.id ? api.getOrder(activePlacedOrder.id) : null),
     enabled: !!activePlacedOrder?.id,
-    refetchInterval: 5000, // Poll every 5s for live kitchen status
+    refetchInterval: 5000,
   });
 
   const currentOrder = liveOrder || activePlacedOrder;
@@ -89,6 +103,7 @@ export default function CustomerQRMenuPage() {
       setActivePlacedOrder(newOrder);
       setCartItems([]);
       setIsCartOpen(false);
+      message.success('Order sent to the kitchen!');
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['tables'] });
     },
@@ -149,6 +164,7 @@ export default function CustomerQRMenuPage() {
         },
       ];
     });
+    message.success({ content: `Added ${item.name}`, duration: 1 });
   };
 
   const totalCartCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
@@ -179,9 +195,18 @@ export default function CustomerQRMenuPage() {
     createOrderMutation.mutate(payload);
   };
 
+  // Step tracker index
+  const getStepStatus = () => {
+    if (!currentOrder) return 0;
+    if (currentOrder.status === 'pending') return 0;
+    if (currentOrder.status === 'preparing') return 1;
+    if (currentOrder.status === 'ready' || currentOrder.status === 'served' || currentOrder.status === 'completed') return 2;
+    return 0;
+  };
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col max-w-lg mx-auto pb-28 border-x border-slate-900 shadow-2xl relative">
-      {/* Top Welcome Header */}
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col max-w-md mx-auto pb-28 border-x border-slate-900 shadow-2xl relative">
+      {/* Top Banner Header */}
       <div className="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 p-5 space-y-4 border-b border-slate-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -189,303 +214,251 @@ export default function CustomerQRMenuPage() {
               <Utensils className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="font-bold text-lg text-white leading-tight">
+              <h1 className="font-bold text-base text-white leading-tight">
                 {hotel?.name || 'Grand Horizon Bistro'}
               </h1>
-              <p className="text-xs text-orange-400 font-medium">Digital Dine-in Menu</p>
+              <span className="text-xs text-orange-400 font-semibold">Contactless Dine-in Menu</span>
             </div>
           </div>
 
-          <div className="px-3 py-1.5 rounded-xl bg-orange-500/20 border border-orange-500/40 text-orange-300 text-xs font-bold flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span>Table {table?.tableNumber || 'T-01'}</span>
-          </div>
+          <Tag color="orange" className="!font-bold !text-xs !px-3 !py-1 !rounded-full">
+            Table {table?.tableNumber || 'T-01'}
+          </Tag>
         </div>
 
         {/* Search */}
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search our gourmet dishes..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl px-4 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-orange-500"
-          />
-        </div>
+        <Input
+          placeholder="Search menu items..."
+          prefix={<SearchOutlined className="text-slate-400 mr-1" />}
+          allowClear
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="!bg-slate-800/90 !border-slate-700 !rounded-2xl"
+        />
 
-        {/* Dietary Quick Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-1 text-xs">
-          <button
-            onClick={() => setDietaryFilter('all')}
-            className={`px-3 py-1.5 rounded-full font-medium transition-all ${
-              dietaryFilter === 'all'
-                ? 'bg-white text-slate-950 font-bold'
-                : 'bg-slate-800 text-slate-300 border border-slate-700'
-            }`}
-          >
-            All Dishes
-          </button>
-          <button
-            onClick={() => setDietaryFilter('veg')}
-            className={`px-3 py-1.5 rounded-full font-medium flex items-center gap-1 transition-all ${
-              dietaryFilter === 'veg'
-                ? 'bg-emerald-500 text-white font-bold'
-                : 'bg-slate-800 text-emerald-400 border border-slate-700'
-            }`}
-          >
-            <Leaf className="w-3.5 h-3.5" /> Vegetarian
-          </button>
-          <button
-            onClick={() => setDietaryFilter('spicy')}
-            className={`px-3 py-1.5 rounded-full font-medium flex items-center gap-1 transition-all ${
-              dietaryFilter === 'spicy'
-                ? 'bg-rose-600 text-white font-bold'
-                : 'bg-slate-800 text-rose-400 border border-slate-700'
-            }`}
-          >
-            <Flame className="w-3.5 h-3.5" /> Spicy
-          </button>
-          <button
-            onClick={() => setDietaryFilter('special')}
-            className={`px-3 py-1.5 rounded-full font-medium flex items-center gap-1 transition-all ${
-              dietaryFilter === 'special'
-                ? 'bg-amber-500 text-slate-950 font-bold'
-                : 'bg-slate-800 text-amber-400 border border-slate-700'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5" /> Chef Special
-          </button>
-        </div>
+        {/* Dietary Filters */}
+        <Segmented
+          block
+          size="middle"
+          value={dietaryFilter}
+          onChange={(val) => setDietaryFilter(val as any)}
+          options={[
+            { label: 'All', value: 'all' },
+            { label: 'Veg 🥗', value: 'veg' },
+            { label: 'Spicy 🌶️', value: 'spicy' },
+            { label: 'Chef 🌟', value: 'special' },
+          ]}
+          className="!bg-slate-800 !p-1 !rounded-xl"
+        />
       </div>
 
-      {/* Live Order Tracker Banner (If an order was placed by guest) */}
+      {/* Live Order Tracker (Ant Design Steps) */}
       {currentOrder && (
-        <div className="m-4 p-4 rounded-2xl bg-gradient-to-r from-orange-950/60 to-slate-900 border border-orange-500/40 shadow-xl space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ChefHat className="w-5 h-5 text-orange-400 animate-bounce" />
-              <span className="font-bold text-sm text-white">Live Kitchen Tracker</span>
+        <Card className="!m-4 !bg-slate-900/90 !border-orange-500/40 !rounded-2xl shadow-xl">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+              <span className="font-bold text-xs text-orange-400 flex items-center gap-1.5">
+                <FireOutlined /> Live Kitchen Tracker
+              </span>
+              <Tag color="orange" className="!font-mono !font-bold">
+                {currentOrder.orderNumber}
+              </Tag>
             </div>
-            <span className="text-xs bg-orange-500/20 text-orange-300 font-bold px-2 py-0.5 rounded-full">
-              {currentOrder.orderNumber}
-            </span>
-          </div>
 
-          {/* Stepper Progress */}
-          <div className="grid grid-cols-3 gap-2 text-center text-xs">
-            <div
-              className={`p-2 rounded-xl border ${
-                currentOrder.status === 'pending' || currentOrder.status === 'preparing' || currentOrder.status === 'ready'
-                  ? 'bg-orange-500/20 border-orange-500 text-orange-200 font-semibold'
-                  : 'bg-slate-800/40 border-slate-800 text-slate-500'
-              }`}
-            >
-              1. Received ⏱️
-            </div>
-            <div
-              className={`p-2 rounded-xl border ${
-                currentOrder.status === 'preparing' || currentOrder.status === 'ready'
-                  ? 'bg-orange-500/20 border-orange-500 text-orange-200 font-semibold'
-                  : 'bg-slate-800/40 border-slate-800 text-slate-500'
-              }`}
-            >
-              2. Cooking 🍳
-            </div>
-            <div
-              className={`p-2 rounded-xl border ${
-                currentOrder.status === 'ready' || currentOrder.status === 'served'
-                  ? 'bg-emerald-500/20 border-emerald-500 text-emerald-200 font-semibold'
-                  : 'bg-slate-800/40 border-slate-800 text-slate-500'
-              }`}
-            >
-              3. Ready 🍽️
-            </div>
+            <Steps
+              size="small"
+              current={getStepStatus()}
+              items={[
+                { title: 'Received', icon: <ClockCircleOutlined /> },
+                { title: 'Cooking', icon: <FireOutlined /> },
+                { title: 'Ready', icon: <CheckCircleOutlined /> },
+              ]}
+              className="custom-antd-steps"
+            />
+            <p className="text-[11px] text-slate-400 text-center !m-0">
+              Kitchen is freshly preparing your culinary selections.
+            </p>
           </div>
-          <p className="text-[11px] text-slate-400 text-center">
-            Your dishes are being prepared fresh in the kitchen.
-          </p>
-        </div>
+        </Card>
       )}
 
-      {/* Category Horizontal Navigation */}
-      <div className="sticky top-16 z-20 bg-slate-950/95 backdrop-blur px-4 py-2.5 border-b border-slate-800/80 overflow-x-auto flex gap-2 no-scrollbar">
-        <button
+      {/* Category Pills */}
+      <div className="sticky top-16 z-20 bg-slate-950/95 backdrop-blur px-4 py-2.5 border-b border-slate-800 overflow-x-auto flex gap-2 no-scrollbar">
+        <Button
+          size="small"
+          type={selectedCategory === 'all' ? 'primary' : 'default'}
           onClick={() => setSelectedCategory('all')}
-          className={`px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
-            selectedCategory === 'all'
-              ? 'bg-orange-500 text-white shadow-md'
-              : 'bg-slate-900 text-slate-400 hover:text-white'
-          }`}
+          className="!rounded-lg !text-xs !font-semibold whitespace-nowrap"
         >
           All
-        </button>
+        </Button>
         {categories.map((cat) => (
-          <button
+          <Button
             key={cat.id}
+            size="small"
+            type={selectedCategory === cat.id ? 'primary' : 'default'}
             onClick={() => setSelectedCategory(cat.id)}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
-              selectedCategory === cat.id
-                ? 'bg-orange-500 text-white shadow-md'
-                : 'bg-slate-900 text-slate-400 hover:text-white'
-            }`}
+            className="!rounded-lg !text-xs !font-semibold whitespace-nowrap"
           >
             {cat.name}
-          </button>
+          </Button>
         ))}
       </div>
 
       {/* Menu Items List */}
       <div className="p-4 space-y-4">
         {filteredItems.map((item) => (
-          <div
+          <Card
             key={item.id}
-            className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-4 flex gap-4 shadow-lg hover:border-slate-700 transition-all"
+            hoverable
+            className="!bg-slate-900 !border-slate-800 hover:!border-slate-700 !rounded-2xl shadow-lg"
+            bodyStyle={{ padding: '16px' }}
           >
-            {/* Left Info */}
-            <div className="flex-1 flex flex-col justify-between space-y-2">
-              <div className="space-y-1">
-                <div className="flex items-center gap-1.5">
-                  {item.isVeg && <Leaf className="w-3.5 h-3.5 text-emerald-400" />}
-                  {item.isSpicy && <Flame className="w-3.5 h-3.5 text-rose-500" />}
-                  {item.isChefSpecial && <Sparkles className="w-3.5 h-3.5 text-amber-400" />}
-                  <h3 className="font-bold text-sm text-slate-100">{item.name}</h3>
+            <div className="flex gap-3">
+              <div className="flex-1 flex flex-col justify-between space-y-2">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {item.isVeg && <Tag color="success" className="!text-[10px] !m-0">Veg</Tag>}
+                    {item.isSpicy && <Tag color="error" className="!text-[10px] !m-0">Spicy</Tag>}
+                    {item.isChefSpecial && <Tag color="gold" className="!text-[10px] !m-0">Special</Tag>}
+                    <h3 className="font-bold text-sm text-slate-100">{item.name}</h3>
+                  </div>
+                  <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                    {item.description}
+                  </p>
                 </div>
-                <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
-                  {item.description}
-                </p>
+
+                <div className="flex items-center justify-between pt-1">
+                  <span className="font-extrabold text-base text-white">
+                    ${item.price.toFixed(2)}
+                  </span>
+                  <Button
+                    type="primary"
+                    size="small"
+                    icon={<PlusOutlined />}
+                    onClick={() => handleAddItem(item)}
+                    className="!bg-gradient-to-r !from-orange-500 !to-amber-500 !font-bold !rounded-xl !shadow-md !shadow-orange-500/20"
+                  >
+                    Add
+                  </Button>
+                </div>
               </div>
 
-              <div className="flex items-center justify-between pt-2">
-                <span className="font-extrabold text-base text-white">
-                  ${item.price.toFixed(2)}
-                </span>
-                <button
-                  onClick={() => handleAddItem(item)}
-                  className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white font-bold text-xs shadow-md shadow-orange-500/20 flex items-center gap-1"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add</span>
-                </button>
-              </div>
+              {item.imageUrl && (
+                <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-slate-800">
+                  <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                </div>
+              )}
             </div>
-
-            {/* Right Image */}
-            {item.imageUrl && (
-              <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-slate-800">
-                <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-              </div>
-            )}
-          </div>
+          </Card>
         ))}
       </div>
 
-      {/* Floating Bottom Cart Bar */}
+      {/* Floating Bottom Cart Action */}
       {totalCartCount > 0 && (
-        <div className="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-40">
-          <button
+        <div className="fixed bottom-5 left-4 right-4 max-w-md mx-auto z-40">
+          <Button
+            type="primary"
+            size="large"
+            block
+            icon={<ShoppingCartOutlined />}
             onClick={() => setIsCartOpen(true)}
-            className="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 text-white font-bold py-3.5 px-5 rounded-2xl shadow-2xl shadow-orange-500/40 flex items-center justify-between transition-all transform active:scale-95"
+            className="!h-14 !rounded-2xl !bg-gradient-to-r !from-orange-500 !to-amber-600 hover:!from-orange-600 !font-bold !text-base !shadow-2xl !shadow-orange-500/40 flex items-center justify-between px-5"
           >
-            <div className="flex items-center gap-2.5">
-              <span className="w-7 h-7 rounded-full bg-black/30 flex items-center justify-center text-xs">
-                {totalCartCount}
-              </span>
-              <span className="text-sm">View Cart / Checkout</span>
+            <div className="flex items-center gap-2">
+              <Badge count={totalCartCount} overflowCount={99} style={{ backgroundColor: '#ffffff', color: '#ea580c', fontWeight: 'bold' }} />
+              <span>View Table Order</span>
             </div>
-            <div className="flex items-center gap-1 text-base">
-              <span>${cartSubtotal.toFixed(2)}</span>
-              <ChevronRight className="w-5 h-5" />
-            </div>
-          </button>
+            <span>${cartSubtotal.toFixed(2)} &rarr;</span>
+          </Button>
         </div>
       )}
 
-      {/* Cart Drawer Modal */}
-      {isCartOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-t-3xl sm:rounded-3xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col max-h-[85vh] text-white animate-in slide-in-from-bottom duration-200">
-            {/* Header */}
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ShoppingBag className="w-5 h-5 text-orange-400" />
-                <span className="font-bold text-base">Your Table Order</span>
-              </div>
-              <button
-                onClick={() => setIsCartOpen(false)}
-                className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Cart Items List */}
-            <div className="p-4 overflow-y-auto space-y-3 flex-1">
-              {cartItems.map((ci, idx) => (
-                <div key={idx} className="bg-slate-800/60 p-3 rounded-xl border border-slate-700/60 space-y-2">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-semibold text-sm text-slate-100">{ci.item.name}</h4>
-                      {ci.modifiers.length > 0 && (
-                        <p className="text-[11px] text-orange-300">
-                          {ci.modifiers.map((m) => m.optionName).join(', ')}
-                        </p>
-                      )}
-                      {ci.instructions && (
-                        <p className="text-[11px] text-slate-400 italic">&ldquo;{ci.instructions}&rdquo;</p>
-                      )}
-                    </div>
-                    <span className="font-bold text-sm text-white">${ci.totalPrice.toFixed(2)}</span>
+      {/* Ant Design Drawer for Cart Checkout */}
+      <Drawer
+        open={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        placement="bottom"
+        height="80vh"
+        className="ant-drawer-luxury"
+        title={
+          <div className="flex items-center gap-2">
+            <ShoppingCartOutlined className="text-orange-400" />
+            <span className="font-bold text-base text-white">Your Table Cart</span>
+          </div>
+        }
+      >
+        <div className="space-y-4 flex flex-col h-full justify-between">
+          <div className="space-y-3 overflow-y-auto pr-1">
+            {cartItems.map((ci, idx) => (
+              <div key={idx} className="bg-slate-800/70 p-3.5 rounded-xl border border-slate-700/60 space-y-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-bold text-sm text-slate-100">{ci.item.name}</h4>
+                    {ci.modifiers.length > 0 && (
+                      <p className="text-xs text-orange-300">
+                        {ci.modifiers.map((m) => m.optionName).join(', ')}
+                      </p>
+                    )}
+                    {ci.instructions && (
+                      <p className="text-[11px] text-slate-400 italic">&ldquo;{ci.instructions}&rdquo;</p>
+                    )}
                   </div>
-
-                  <div className="flex justify-between items-center pt-1 border-t border-slate-700/40 text-xs">
-                    <span className="text-slate-400">Qty: {ci.quantity}</span>
-                    <button
-                      onClick={() => setCartItems((prev) => prev.filter((_, i) => i !== idx))}
-                      className="text-rose-400 font-medium"
-                    >
-                      Remove
-                    </button>
-                  </div>
+                  <span className="font-bold text-sm text-white">${ci.totalPrice.toFixed(2)}</span>
                 </div>
-              ))}
 
-              {/* Guest name & notes */}
-              <div className="space-y-2 pt-2">
-                <input
-                  type="text"
-                  placeholder="Your Name (Optional)"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white placeholder-slate-500"
-                />
-                <textarea
-                  placeholder="Special instructions for kitchen..."
-                  value={tableNotes}
-                  onChange={(e) => setTableNotes(e.target.value)}
-                  rows={2}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white placeholder-slate-500 resize-none"
-                />
+                <div className="flex justify-between items-center pt-1 border-t border-slate-700/40 text-xs">
+                  <span className="text-slate-400">Qty: {ci.quantity}</span>
+                  <Button
+                    type="text"
+                    danger
+                    size="small"
+                    icon={<DeleteOutlined />}
+                    onClick={() => setCartItems((prev) => prev.filter((_, i) => i !== idx))}
+                  >
+                    Remove
+                  </Button>
+                </div>
               </div>
-            </div>
+            ))}
 
-            {/* Cart Footer */}
-            <div className="p-4 border-t border-slate-800 bg-slate-900/90 space-y-3">
-              <div className="flex justify-between font-bold text-base">
-                <span>Total Amount</span>
-                <span className="text-orange-400">${cartSubtotal.toFixed(2)}</span>
-              </div>
-              <button
-                onClick={handlePlaceOrder}
-                disabled={createOrderMutation.isPending}
-                className="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2"
-              >
-                <ChefHat className="w-5 h-5" />
-                <span>{createOrderMutation.isPending ? 'Sending to Kitchen...' : 'Send Order to Kitchen'}</span>
-              </button>
+            {/* Guest Name & Notes Form */}
+            <div className="space-y-2 pt-2">
+              <Input
+                placeholder="Guest Name (Optional)"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="!bg-slate-800 !border-slate-700 !rounded-xl"
+              />
+              <TextArea
+                rows={2}
+                placeholder="Special instructions for kitchen..."
+                value={tableNotes}
+                onChange={(e) => setTableNotes(e.target.value)}
+                className="!bg-slate-800 !border-slate-700 !rounded-xl"
+              />
             </div>
           </div>
+
+          {/* Drawer Footer */}
+          <div className="pt-3 border-t border-slate-800 space-y-3">
+            <div className="flex justify-between font-bold text-lg">
+              <span>Total Amount</span>
+              <span className="text-orange-400">${cartSubtotal.toFixed(2)}</span>
+            </div>
+            <Button
+              type="primary"
+              size="large"
+              block
+              onClick={handlePlaceOrder}
+              loading={createOrderMutation.isPending}
+              className="!h-12 !rounded-xl !bg-gradient-to-r !from-orange-500 !to-amber-600 !font-bold !shadow-lg !shadow-orange-500/25"
+            >
+              Send Order to Kitchen
+            </Button>
+          </div>
         </div>
-      )}
+      </Drawer>
 
       {/* Modifier Modal */}
       <ItemModifierModal
