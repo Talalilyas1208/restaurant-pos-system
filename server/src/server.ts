@@ -5,12 +5,14 @@ import morgan from 'morgan';
 import { config } from './config/index.js';
 import apiRoutes from './routes/index.js';
 import { errorHandler } from './middlewares/errorHandler.js';
-import { getSupabaseClient } from './config/supabase.js';
+import { requestId, noCache } from './middlewares/cacheControl.js';
+import { getHealth } from './controllers/health.controller.js';
 
 const app = express();
 
 // 1. Security & utility middlewares
 app.use(helmet());
+app.use(requestId); // Attach X-Request-ID to every response for client-side tracing
 app.use(
   cors({
     origin: config.corsOrigin === '*' ? true : config.corsOrigin,
@@ -23,16 +25,8 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// 3. Health & Status
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    service: 'Hotel & Restaurant POS API',
-    timestamp: new Date().toISOString(),
-    env: config.nodeEnv,
-    supabaseConnected: !!getSupabaseClient(),
-  });
-});
+// 3. Health & Status (handled via dedicated health controller)
+app.get('/health', noCache, getHealth);
 
 // 4. API Routes
 app.use('/api/v1', apiRoutes);
