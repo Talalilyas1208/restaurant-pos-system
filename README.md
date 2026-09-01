@@ -1,45 +1,107 @@
 # 🍽️ Grand Horizon - Hotel & Restaurant POS & Contactless QR Menu System
 
-A production-ready, full-featured Point of Sale (POS), Kitchen Display System (KDS), and Mobile QR Code Digital Menu platform engineered for restaurants, boutique hotels, cafes, and room service.
+[![Next.js](https://img.shields.io/badge/Next.js-14.2-black?logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Ant Design](https://img.shields.io/badge/Ant%20Design-5.x-0170FE?logo=antdesign)](https://ant.design/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
+[![Redux Toolkit](https://img.shields.io/badge/Redux%20Toolkit-2.5-764ABC?logo=redux)](https://redux-toolkit.js.org/)
+[![TanStack Query](https://img.shields.io/badge/TanStack%20Query-v5-FF4154?logo=reactquery)](https://tanstack.com/query)
+[![Express.js](https://img.shields.io/badge/Express.js-4.x-000000?logo=express)](https://expressjs.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase)](https://supabase.com/)
+
+A modern, production-ready, full-stack **Point of Sale (POS)**, **Kitchen Display System (KDS)**, and **Contactless QR Code Digital Menu** ecosystem built for fine-dining restaurants, hotel dining, cafes, and room service.
 
 ---
 
-## 🌟 Key Features
+## 🧊 3D System Dimension Breakdown (3-Dimensional Architecture)
 
-### 1. 🖥️ POS Cashier & Waiter Terminal (`/pos`)
-- **Fast Touch Catalog**: Filterable categories, fuzzy dish search, modifier selection modal (doneness, toppings, extra sides).
-- **Floor Table Manager**: Real-time table status mapping (*Available*, *Occupied*, *Billed*, *Reserved*).
-- **Redux-Persist Cart**: Local drafts persisted across page reloads and offline sessions.
-- **Bill Splitting**: 2-way to 6-way equal bill calculations.
-- **Multi-Method Settlement**: Cash (with tendered & change calculator), Credit/Debit Card, and Hotel Room Bill Charge.
-- **Thermal Receipt Generator**: Built-in 80mm & 58mm POS receipt layout with QR invoice code and 1-click `window.print()`.
+Grand Horizon is engineered across **3 interconnected operational dimensions**, ensuring synchronized data flow between diners, service staff, kitchen staff, and management in real time.
 
-### 2. 📱 Guest QR Code Digital Menu (`/menu/[hotelId]/[tableId]`)
-- **Zero App Download**: Customers scan the table QR code to open the restaurant's menu with table context automatically bound.
-- **Dietary Filter Chips**: Toggle Vegetarian, Spicy, and Chef Specials.
-- **Live Kitchen Tracker**: Real-time order progress bar (*Received ⏱️* &rarr; *Cooking in Kitchen 🍳* &rarr; *Ready / Served 🍽️*).
+```
+                      ┌──────────────────────────────────────────────┐
+                      │        DIMENSION 1: FRONT-OF-HOUSE           │
+                      │  • Touch POS Terminal  • Guest Mobile QR Menu│
+                      │  • Modifiers & Splits  • 80mm Thermal Receipt│
+                      └──────────────────────┬───────────────────────┘
+                                             │
+                                  Orders & Updates (REST / WS)
+                                             │
+                                             ▼
+                      ┌──────────────────────────────────────────────┐
+                      │         DIMENSION 2: BACK-OF-HOUSE           │
+                      │  • Kitchen Display (KDS) Live Kanban         │
+                      │  • Elapsed Prep Timers • Ticket State Sync   │
+                      └──────────────────────┬───────────────────────┘
+                                             │
+                                  State & Status Updates
+                                             │
+                                             ▼
+                      ┌──────────────────────────────────────────────┐
+                      │    DIMENSION 3: DATA & MANAGEMENT CORE       │
+                      │  • Express.js REST API • Supabase PostgreSQL │
+                      │  • Redux-Persist Cache • QR Stand Generator  │
+                      └──────────────────────────────────────────────┘
+```
 
-### 3. 🍳 Kitchen Display System (`/kds`)
-- **Live Kanban Queue**: Automated tickets organized into *New Tickets*, *Cooking On Line*, and *Pass / Ready to Serve*.
-- **Elapsed Ticket Timers**: Visual warning timer highlighting tickets over 15 minutes.
-- **Real-Time Polling**: React Query synchronization every 8 seconds.
+### 1️⃣ Dimension 1: Front-of-House (FoH) & Guest Experience
+* **Touch-Optimized POS Terminal (`/pos`)**: High-speed touch catalog with category filters, fuzzy dish search, dish modifiers (doneness, toppings, extra sides), table occupancy mapping, split bills (2-to-6-way), multi-tender settlement (Cash, Card, Room Charge), and instant 80mm/58mm thermal receipt printing.
+* **Contactless QR Guest Menu (`/menu/[hotelId]/[tableId]`)**: Zero-app-download mobile web menu automatically bound to the guest's table token. Includes dietary tags (Vegetarian, Spicy, Chef Special) and live visual order tracking (*Received* &rarr; *Cooking* &rarr; *Ready*).
 
-### 4. ⚙️ Admin Hub & Table QR Generator (`/admin`)
-- **Printable Table Stand Generator**: High-resolution branded QR table cards with customizable table tokens.
-- **Menu & Dish Manager**: Add new items, update prices, and toggle 86 / Sold-out stock status in real-time.
-- **Revenue Analytics**: Daily sales, average ticket value, top-selling dishes, and hourly peak volume chart.
+### 2️⃣ Dimension 2: Back-of-House (BoH) & Kitchen Operations
+* **Live Kitchen Display Kanban (`/kds`)**: Dynamic ticket columns (*New Tickets*, *Cooking On Line*, *Pass / Ready to Serve*) with single-click status progression.
+* **Elapsed Prep Time Tracking**: Automated visual alert counters highlighting tickets over 15 minutes to eliminate food preparation bottlenecks.
+* **Real-Time Polling & Invalidation**: TanStack React Query synchronization keeping kitchen screens continually synchronized with POS and QR orders.
+
+### 3️⃣ Dimension 3: Data, Persistence & Cloud Management Core
+* **Express.js API Layer**: Layered modular architecture (Controllers, Middlewares, Services, Zod schema validation, Helmet security).
+* **Dual-Layer Persistence**: 
+  - *Client State*: Redux Toolkit with `redux-persist` for offline cart preservation across tab reloads.
+  - *Server State*: TanStack Query with localStorage sync persister for instant cache reads.
+* **Supabase PostgreSQL & Admin Dashboard (`/admin`)**: Complete database schema with Row-Level Security (RLS), menu item availability toggle (86ing items), revenue analytics, and batch branded printable QR table stands.
 
 ---
 
-## 🏗️ Architecture & Technology Stack
+## 🌟 Key Features Matrix
 
-| Layer | Technologies |
-|---|---|
-| **Frontend** | Next.js 14+ (App Router), React 18, TypeScript, Tailwind CSS, Lucide Icons |
-| **State & Cache** | Redux Toolkit (`@reduxjs/toolkit`), `redux-persist`, TanStack React Query v5 |
-| **Backend API** | Express.js, TypeScript (`tsx`), Helmet, CORS, Morgan, Zod Validation |
-| **Database & Realtime** | Supabase (PostgreSQL 14+), Schema migrations, Seed data |
-| **QR Code Engine** | `qrcode.react` (SVG high-resolution QR rendering) |
+| Module | Core Functionality | Target Users | Key Technologies |
+|---|---|---|---|
+| **POS Terminal** | Touch ordering, table manager, bill splitting, payment processing, thermal receipts | Cashiers, Waiters, Captains | Next.js 14, Ant Design 5, Redux Persist |
+| **QR Digital Menu** | Contactless dining, dietary filters, live order tracker | Restaurant Guests, Room Service | Next.js App Router, Tailwind CSS, Lucide |
+| **Kitchen KDS** | Kanban ticket workflow, prep time warnings, status sync | Chefs, Line Cooks, Expeditors | TanStack Query v5, Ant Design Cards |
+| **Admin Hub** | Printable table QR generator, menu & price editor, revenue analytics | Managers, Owners, Accountants | Ant Design Charts, `qrcode.react`, Supabase |
+
+---
+
+## 🔄 End-to-End Order Lifecycle Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Guest as 📱 Guest (QR) / Waiter (POS)
+    participant POS as 🖥️ Client Web App
+    participant API as 🚀 Express.js REST API
+    participant DB as 🗄️ Supabase PostgreSQL
+    actor Chef as 🍳 Kitchen (KDS)
+
+    Guest->>POS: Scan QR / Select Dishes & Modifiers
+    POS->>API: POST /api/v1/orders (Payload with table & items)
+    API->>DB: Insert Order & Line Items (Status: PENDING)
+    DB-->>API: Order Created
+    API-->>POS: 201 Created (Order Reference #)
+
+    par Real-Time KDS Sync
+        Chef->>API: GET /api/v1/orders?status=active
+        API-->>Chef: New Order Ticket Pops Up on KDS
+    and Guest Live Tracker
+        Guest->>API: Polling /api/v1/orders/:id
+        API-->>Guest: Live Status: "Cooking in Kitchen"
+    end
+
+    Chef->>API: PATCH /api/v1/orders/:id (Status: READY)
+    POS->>API: POST /api/v1/orders/:id/pay (Settlement & Receipt Print)
+    API->>DB: Update Status: COMPLETED, Table: AVAILABLE
+```
 
 ---
 
@@ -47,77 +109,93 @@ A production-ready, full-featured Point of Sale (POS), Kitchen Display System (K
 
 ```text
 restaurant-management/
-├── client/                     # Next.js 14+ App Router Frontend
+├── client/                               # Next.js 14+ App Router Frontend
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── layout.tsx      # Global layout & Providers
-│   │   │   ├── page.tsx        # Operations Dashboard & Role Hub
-│   │   │   ├── pos/page.tsx    # POS Cashier Terminal
-│   │   │   ├── menu/[hotelId]/[tableId]/page.tsx # Customer QR Menu & Tracker
-│   │   │   ├── kds/page.tsx    # Kitchen Display System
-│   │   │   └── admin/page.tsx  # Admin & QR Stand Generator
-│   │   ├── components/         # ReceiptModal, SplitBillModal, ItemModifierModal, QRStandCard, Navbar
-│   │   ├── store/              # Redux Toolkit store + redux-persist slices
-│   │   ├── lib/                # TanStack React Query client & API fetcher
-│   │   └── types/              # TypeScript interfaces
-├── server/                     # Express.js REST API Backend
+│   │   │   ├── layout.tsx                # Global AntD Registry & Redux/Query Providers
+│   │   │   ├── page.tsx                  # Workspace Role Selection Hub
+│   │   │   ├── pos/page.tsx              # Touch POS Cashier & Table Terminal
+│   │   │   ├── menu/[hotelId]/[tableId]/ # Contactless Guest QR Menu & Tracker
+│   │   │   ├── kds/page.tsx              # Kitchen Display Kanban System
+│   │   │   └── admin/page.tsx            # Admin Operations & QR Stand Cards
+│   │   ├── components/                   # Modal dialogs, Receipt formatters, QR stands
+│   │   ├── store/                        # Redux Toolkit slices (Cart, Auth, Table)
+│   │   ├── lib/                          # TanStack Query persister & API client
+│   │   └── types/                        # TypeScript domain interfaces
+├── server/                               # Express.js REST API Backend
 │   ├── src/
-│   │   ├── config/             # Supabase client & environment variables
-│   │   ├── controllers/        # Hotel, Table, Menu, Order, Payment, Analytics controllers
-│   │   ├── middlewares/        # Error handler & Zod validation
-│   │   ├── routes/             # REST endpoints (/api/v1/...)
-│   │   ├── services/           # Supabase DB service with in-memory fallback engine
-│   │   └── server.ts           # Express server entry point
+│   │   ├── config/                       # Supabase client & environment loader
+│   │   ├── controllers/                  # Order, Menu, Table, Analytics controllers
+│   │   ├── middlewares/                  # Zod validation & central error handler
+│   │   ├── routes/                       # REST routes (/api/v1/...)
+│   │   ├── services/                     # PostgreSQL service & in-memory fallback
+│   │   └── server.ts                     # Express application bootstrap
 ├── supabase/
-│   ├── schema.sql              # PostgreSQL tables, relations, and RLS policies
-│   └── seed.sql                # Hotel seed data, tables, categories, dishes
-├── package.json                # Monorepo orchestration scripts
+│   ├── schema.sql                        # Database tables, relationships, RLS policies
+│   └── seed.sql                          # Demo restaurant tables, categories, dishes
+├── package.json                          # Monorepo workspace runner scripts
 └── README.md
 ```
 
 ---
 
-## 🚀 Quick Start Guide
+## 🚀 Getting Started
 
 ### 1. Prerequisites
-- **Node.js**: v18.0.0 or higher
-- **npm** or **pnpm** / **yarn**
+* **Node.js**: v18.0.0 or higher
+* **npm**, **pnpm**, or **yarn**
 
-### 2. Start Development Servers
+### 2. Installation & Setup
+
+Clone the repository and install dependencies:
+
+```bash
+git clone https://github.com/Talalilyas1208/restaurant-pos-system.git
+cd restaurant-pos-system
+
+# Install backend dependencies
+cd server && npm install
+
+# Install frontend dependencies
+cd ../client && npm install
+cd ..
+```
+
+### 3. Run Development Environment
+
 From the project root:
 
 ```bash
-# Start backend API (Port 5001) and frontend (Port 3000):
+# Start backend Express server (Port 5001)
 npm run dev:server
-# in another terminal:
+
+# In a separate terminal, start frontend Next.js app (Port 3002 / 3000)
 npm run dev:client
 ```
 
-- **Frontend App**: [http://localhost:3000](http://localhost:3000)
-- **Backend API**: [http://localhost:5001/api/v1](http://localhost:5001/api/v1)
-- **API Health Check**: [http://localhost:5001/health](http://localhost:5001/health)
+* **Frontend Application**: [http://localhost:3002](http://localhost:3002) (or `localhost:3000`)
+* **Backend API Base**: [http://localhost:5001/api/v1](http://localhost:5001/api/v1)
+* **Health Check**: [http://localhost:5001/health](http://localhost:5001/health)
 
 ---
 
-## 🗄️ Supabase Database Setup (Optional)
+## 🗄️ Database & Supabase Integration (Optional)
 
-1. Create a free project at [supabase.com](https://supabase.com).
-2. Go to the **SQL Editor** in your Supabase dashboard.
-3. Paste the contents of `supabase/schema.sql` and run.
-4. Paste the contents of `supabase/seed.sql` and run.
-5. In `server/.env`, set:
+The backend features an **automatic in-memory fallback store**, meaning the entire platform runs out-of-the-box for local testing without database credentials.
+
+To connect to a live Supabase PostgreSQL instance:
+1. Create a database on [supabase.com](https://supabase.com).
+2. Execute `supabase/schema.sql` in the Supabase SQL Editor.
+3. Execute `supabase/seed.sql` to populate sample menu items and table configurations.
+4. Set your environment variables in `server/.env`:
    ```env
+   PORT=5001
    SUPABASE_URL=https://your-project.supabase.co
-   SUPABASE_SERVICE_ROLE_KEY=your-service-role-or-anon-key
+   SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
    ```
-*(Note: The server includes a built-in store service that functions immediately even without Supabase credentials for local testing!)*
 
 ---
 
-## 📤 GitHub Repository
-Repository is synchronized at: [https://github.com/Talalilyas1208/restaurant-pos-system.git](https://github.com/Talalilyas1208/restaurant-pos-system.git)
+## 📄 License & Attribution
 
----
-
-## 📄 License
-MIT License. Created for hospitality businesses and fine dining restaurants.
+Distributed under the **MIT License**. Engineered for high-throughput hospitality businesses, restaurants, and hotels.
