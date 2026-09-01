@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Card,
@@ -26,6 +26,7 @@ import {
 } from '@ant-design/icons';
 import { ChefHat } from 'lucide-react';
 import { api } from '../../lib/api';
+import { STALE } from '../../lib/queryClient';
 import { Order, OrderStatus } from '../../types';
 
 const { Title, Text } = Typography;
@@ -36,16 +37,87 @@ export default function KitchenDisplayPage() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [now, setNow] = useState(Date.now());
 
+  // Track the count of pending orders from the previous fetch to detect NEW ones
+  const prevPendingCount = useRef(0);
+  const isInitialLoad = useRef(true);
+  const hasUserInteracted = useRef(false);
+
+  // Mark user interaction on click or touch so AudioContext is allowed by browser
   useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 10000);
+    const handleGesture = () => {
+      hasUserInteracted.current = true;
+    };
+    window.addEventListener('click', handleGesture, { once: true });
+    window.addEventListener('keydown', handleGesture, { once: true });
+    return () => {
+      window.removeEventListener('click', handleGesture);
+      window.removeEventListener('keydown', handleGesture);
+    };
+  }, []);
+
+  // ── useEffect: Clock tick (every 10 s) ───────────────────────────────────────
+  // Updates the `now` timestamp so elapsed-time labels refresh automatically.
+  // Cleanup stops the interval on unmount to prevent memory leaks.
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 10_000);
     return () => clearInterval(timer);
   }, []);
 
+  // ── Queries ──────────────────────────────────────────────────────────────────
   const { data: orders = [], refetch, isFetching } = useQuery({
     queryKey: ['orders'],
-    queryFn: () => api.getOrders(),
-    refetchInterval: 8000,
+    queryFn: ({ signal }) => api.getOrders(undefined, signal),
+    staleTime: STALE.ORDERS,
+    refetchInterval: STALE.ORDERS, // auto-poll every 8 s for live kitchen sync
   });
+
+  // ── useEffect: Audio alert on new pending tickets ────────────────────────────
+  // Plays a short beep using Web Audio API whenever a NEW order arrives after page load.
+  // Only fires after initial load and after user has interacted with the page.
+  useEffect(() => {
+    const pendingCount = orders.filter((o) => o.status === 'pending').length;
+
+    // Skip playing sound on initial mount to satisfy browser autoplay policy
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      prevPendingCount.current = pendingCount;
+      return;
+    }
+
+    if (soundEnabled && hasUserInteracted.current && pendingCount > prevPendingCount.current) {
+      try {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioContextClass) {
+          const ctx = new AudioContextClass();
+          if (ctx.state === 'suspended') {
+            ctx.resume();
+          }
+          const oscillator = ctx.createOscillator();
+          const gain = ctx.createGain();
+
+          oscillator.connect(gain);
+          gain.connect(ctx.destination);
+
+          oscillator.type = 'sine';
+          oscillator.frequency.setValueAtTime(880, ctx.currentTime);       // A5 — alert tone
+          oscillator.frequency.setValueAtTime(660, ctx.currentTime + 0.1); // E5 — resolve
+          gain.gain.setValueAtTime(0.3, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+
+          oscillator.start(ctx.currentTime);
+          oscillator.stop(ctx.currentTime + 0.35);
+
+          oscillator.onended = () => {
+            ctx.close().catch(() => {});
+          };
+        }
+      } catch {
+        // AudioContext may be unavailable or blocked — silently ignore
+      }
+    }
+
+    prevPendingCount.current = pendingCount;
+  }, [orders, soundEnabled]);
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: OrderStatus }) =>
@@ -159,7 +231,7 @@ export default function KitchenDisplayPage() {
                         ? '!bg-rose-950/40 !border-rose-500 animate-pulse'
                         : '!bg-slate-900 !border-amber-500/40'
                     }`}
-                    bodyStyle={{ padding: '16px' }}
+                    styles={{ body: { padding: '16px' } }}
                   >
                     {/* Header */}
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
@@ -252,7 +324,7 @@ export default function KitchenDisplayPage() {
                         ? '!bg-rose-950/40 !border-rose-500 animate-pulse'
                         : '!bg-slate-900 !border-blue-500/40'
                     }`}
-                    bodyStyle={{ padding: '16px' }}
+                    styles={{ body: { padding: '16px' } }}
                   >
                     <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
                       <div>
@@ -319,7 +391,7 @@ export default function KitchenDisplayPage() {
                 <Card
                   key={order.id}
                   className="!bg-slate-900 !border-emerald-500/40 !rounded-2xl shadow-lg"
-                  bodyStyle={{ padding: '16px' }}
+                  styles={{ body: { padding: '16px' } }}
                 >
                   <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
                     <div>
@@ -359,3 +431,4 @@ export default function KitchenDisplayPage() {
     </div>
   );
 }
+

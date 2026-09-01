@@ -152,7 +152,10 @@ export default function AdminPage() {
             <img
               src={record.imageUrl}
               alt={text}
-              className="w-10 h-10 rounded-xl object-cover shadow-sm"
+              className="w-10 h-10 rounded-xl object-cover shadow-sm bg-slate-800"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = 'none';
+              }}
             />
           )}
           <div>
@@ -471,7 +474,7 @@ export default function AdminPage() {
           </div>
 
           {/* Ant Design Table */}
-          <Card className="!bg-slate-900 !border-slate-800 !rounded-2xl shadow-xl overflow-hidden" bodyStyle={{ padding: 0 }}>
+          <Card className="!bg-slate-900 !border-slate-800 !rounded-2xl shadow-xl overflow-hidden" styles={{ body: { padding: 0 } }}>
             <Table
               dataSource={menuItems}
               columns={dishColumns}

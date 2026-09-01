@@ -34,7 +34,7 @@ export default function QRStandCard({ table, hotel, originUrl = 'http://localhos
       <Card
         hoverable
         className="!bg-slate-900 !border-slate-800 hover:!border-orange-500/50 !rounded-2xl transition-all shadow-xl"
-        bodyStyle={{ padding: '20px' }}
+        styles={{ body: { padding: '20px' } }}
       >
         <div className="flex flex-col items-center text-center space-y-4">
           {/* Printable Stand Frame */}

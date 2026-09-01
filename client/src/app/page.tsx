@@ -138,7 +138,7 @@ export default function HomePage() {
                 <Card
                   hoverable
                   className="!bg-slate-900 !border-slate-800 hover:!border-orange-500/60 !rounded-2xl transition-all shadow-xl h-full flex flex-col justify-between group"
-                  bodyStyle={{ padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}
+                  styles={{ body: { padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' } }}
                 >
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">

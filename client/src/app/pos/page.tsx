@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useDispatch, useSelector } from 'react-redux';
 import {
   Tabs,
   Input,
@@ -39,9 +38,11 @@ import {
   AppstoreOutlined,
   TableOutlined,
   UserOutlined,
+  WifiOutlined,
+  DisconnectOutlined,
 } from '@ant-design/icons';
 import { Utensils, Sparkles, Flame, Leaf } from 'lucide-react';
-import { RootState } from '../../store';
+import { useAppDispatch, useAppSelector } from '../../store';
 import {
   addToCart,
   updateQuantity,
@@ -52,7 +53,9 @@ import {
   setCustomerInfo,
   setOrderType,
 } from '../../store/slices/cartSlice';
+import { setOnlineStatus } from '../../store/slices/posSessionSlice';
 import { api } from '../../lib/api';
+import { STALE } from '../../lib/queryClient';
 import { MenuItem, DiningTable, SelectedModifier, Order } from '../../types';
 import ItemModifierModal from '../../components/ItemModifierModal';
 import SplitBillModal from '../../components/SplitBillModal';
@@ -61,10 +64,13 @@ import ReceiptModal from '../../components/ReceiptModal';
 const { Text, Title } = Typography;
 
 export default function POSTerminalPage() {
-  const dispatch = useDispatch();
+  // ── Typed Redux hooks ────────────────────────────────────────────────────────
+  const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
 
-  const cart = useSelector((state: RootState) => state.cart);
+  const cart = useAppSelector((state) => state.cart);
+  const isOnline = useAppSelector((state) => state.posSession.isOnline);
+
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'menu' | 'tables'>('menu');
@@ -82,25 +88,83 @@ export default function POSTerminalPage() {
   const [roomNumber, setRoomNumber] = useState('');
   const [lastPaidOrder, setLastPaidOrder] = useState<Order | null>(null);
 
-  // Queries
+  // ── useEffect: Online / Offline detection ────────────────────────────────────
+  // Syncs browser connectivity state into Redux so any component can react to it.
+  // The cleanup removes listeners when the component unmounts.
+  useEffect(() => {
+    const handleOnline = () => {
+      dispatch(setOnlineStatus(true));
+      message.success({ content: 'Back online — data syncing…', key: 'connectivity', duration: 2 });
+    };
+    const handleOffline = () => {
+      dispatch(setOnlineStatus(false));
+      message.warning({ content: 'You are offline', key: 'connectivity', duration: 0 });
+    };
+
+    // Set initial state correctly (user may have loaded page while offline)
+    dispatch(setOnlineStatus(navigator.onLine));
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      message.destroy('connectivity');
+    };
+  }, [dispatch]);
+
+  // ── useEffect: Dynamic document title ────────────────────────────────────────
+  // Updates the browser tab title to reflect cart item count.
+  // Cleanup resets it to the default title on unmount.
+  useEffect(() => {
+    const totalQty = cart.items.reduce((sum, i) => sum + i.quantity, 0);
+    document.title = totalQty > 0
+      ? `(${totalQty}) Order Ticket — Grand Horizon POS`
+      : 'Grand Horizon POS';
+    return () => {
+      document.title = 'Grand Horizon POS';
+    };
+  }, [cart.items]);
+
+  // ── useEffect: Keyboard shortcuts ────────────────────────────────────────────
+  // Escape closes any open modal without reaching for the mouse.
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsPaymentModalOpen(false);
+        setIsModifierModalOpen(false);
+        setIsSplitModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // ── Queries (with signal for abort on unmount) ───────────────────────────────
   const { data: hotel } = useQuery({
     queryKey: ['hotel'],
-    queryFn: () => api.getHotel(),
+    queryFn: ({ signal }) => api.getHotel('grand-horizon', signal),
+    staleTime: STALE.HOTEL,
   });
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
-    queryFn: () => api.getCategories(),
+    queryFn: ({ signal }) => api.getCategories(signal),
+    staleTime: STALE.MENU,
   });
 
   const { data: menuItems = [] } = useQuery({
     queryKey: ['menu-items'],
-    queryFn: () => api.getMenuItems(),
+    queryFn: ({ signal }) => api.getMenuItems(undefined, signal),
+    staleTime: STALE.MENU,
   });
 
   const { data: tables = [] } = useQuery({
     queryKey: ['tables'],
-    queryFn: () => api.getTables(),
+    queryFn: ({ signal }) => api.getTables(signal),
+    staleTime: STALE.TABLES,
+    refetchInterval: STALE.TABLES, // auto-poll tables every 15 s
   });
 
   // Mutations
@@ -278,6 +342,18 @@ export default function POSTerminalPage() {
               />
             </div>
           )}
+
+          {/* Connectivity indicator */}
+          <Tooltip title={isOnline ? 'Connected to server' : 'Offline — showing cached data'}>
+            <div className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border ${
+              isOnline
+                ? 'text-emerald-400 border-emerald-500/30 bg-emerald-950/30'
+                : 'text-rose-400 border-rose-500/30 bg-rose-950/30'
+            }`}>
+              {isOnline ? <WifiOutlined /> : <DisconnectOutlined />}
+              {isOnline ? 'Online' : 'Offline'}
+            </div>
+          </Tooltip>
         </div>
 
         {/* Content View */}
@@ -303,22 +379,24 @@ export default function POSTerminalPage() {
                     hoverable
                     onClick={() => handleItemClick(item)}
                     className="!bg-slate-900/90 hover:!bg-slate-800/90 !border-slate-800 hover:!border-orange-500/50 !rounded-2xl transition-all shadow-md hover:shadow-xl h-full flex flex-col justify-between select-none"
-                    bodyStyle={{ padding: '12px', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}
+                    styles={{ body: { padding: '12px', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' } }}
                   >
                     {/* Item Image */}
                     <div>
-                      <div className="relative h-28 w-full rounded-xl overflow-hidden mb-2.5 bg-slate-800">
+                      <div className="relative h-28 w-full rounded-xl overflow-hidden mb-2.5 bg-slate-800 flex items-center justify-center">
                         {item.imageUrl ? (
                           <img
                             src={item.imageUrl}
                             alt={item.name}
                             className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).style.display = 'none';
+                            }}
                           />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-slate-600">
-                            <Utensils className="w-8 h-8" />
-                          </div>
-                        )}
+                        ) : null}
+                        <div className="absolute inset-0 flex items-center justify-center text-slate-600 -z-0">
+                          <Utensils className="w-8 h-8 opacity-40" />
+                        </div>
 
                         {/* Top Tag Pills */}
                         <div className="absolute top-1.5 left-1.5 flex flex-wrap gap-1">

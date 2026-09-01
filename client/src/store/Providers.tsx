@@ -3,11 +3,12 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { ConfigProvider, theme, App } from 'antd';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { ConfigProvider, theme, App, Spin } from 'antd';
 import { store, persistor } from './index';
-import { queryClient } from '../lib/queryClient';
+import { queryClient, persister } from '../lib/queryClient';
 
+// ─── Ant Design Custom Theme ──────────────────────────────────────────────────
 const customTheme = {
   algorithm: theme.darkAlgorithm,
   token: {
@@ -73,16 +74,40 @@ const customTheme = {
   },
 };
 
+// ─── Providers ────────────────────────────────────────────────────────────────
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <Provider store={store}>
+      {/* PersistGate defers Redux-persisted state rehydration until after mount */}
       <PersistGate loading={null} persistor={persistor}>
-        <QueryClientProvider client={queryClient}>
+        {/*
+          PersistQueryClientProvider restores the React Query cache from localStorage
+          before the first render. `persister` is undefined on the server (SSR-safe).
+          On client, stale cache (older than `maxAge`) is discarded automatically.
+        */}
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{
+            persister: persister!,
+            maxAge: 5 * 60 * 1000, // Discard cache entries older than 5 minutes
+            buster: 'v1',          // Increment this to force-clear old cache on deploy
+          }}
+          onSuccess={() => {
+            // Background-refetch all queries once cache is restored,
+            // so users always see fresh data after the initial instant load.
+            queryClient.resumePausedMutations().then(() => {
+              queryClient.invalidateQueries();
+            });
+          }}
+        >
           <ConfigProvider theme={customTheme}>
-            <App>{children}</App>
+            <App>
+              {children}
+            </App>
           </ConfigProvider>
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
       </PersistGate>
     </Provider>
   );
 }
+

@@ -312,7 +312,7 @@ export default function CustomerQRMenuPage() {
             key={item.id}
             hoverable
             className="!bg-slate-900 !border-slate-800 hover:!border-slate-700 !rounded-2xl shadow-lg"
-            bodyStyle={{ padding: '16px' }}
+            styles={{ body: { padding: '16px' } }}
           >
             <div className="flex gap-3">
               <div className="flex-1 flex flex-col justify-between space-y-2">
@@ -345,8 +345,16 @@ export default function CustomerQRMenuPage() {
               </div>
 
               {item.imageUrl && (
-                <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-slate-800">
-                  <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-slate-800 flex items-center justify-center">
+                  <img
+                    src={item.imageUrl}
+                    alt={item.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                  <Utensils className="w-6 h-6 text-slate-600 opacity-40 absolute" />
                 </div>
               )}
             </div>
@@ -379,7 +387,7 @@ export default function CustomerQRMenuPage() {
         open={isCartOpen}
         onClose={() => setIsCartOpen(false)}
         placement="bottom"
-        height="80vh"
+        styles={{ wrapper: { height: '80vh' } }}
         className="ant-drawer-luxury"
         title={
           <div className="flex items-center gap-2">

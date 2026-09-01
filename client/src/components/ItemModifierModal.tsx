@@ -77,8 +77,15 @@ export default function ItemModifierModal({ item, isOpen, onClose, onConfirm }: 
       <div className="space-y-4 pt-2">
         {/* Item Image */}
         {item.imageUrl && (
-          <div className="h-44 w-full rounded-2xl overflow-hidden relative shadow-inner">
-            <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+          <div className="h-44 w-full rounded-2xl overflow-hidden relative shadow-inner bg-slate-800 flex items-center justify-center">
+            <img
+              src={item.imageUrl}
+              alt={item.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = 'none';
+              }}
+            />
             <div className="absolute top-2 left-2 flex gap-1.5">
               {item.isChefSpecial && <Tag color="gold">Chef Special</Tag>}
               {item.isSpicy && <Tag color="error">Spicy</Tag>}
