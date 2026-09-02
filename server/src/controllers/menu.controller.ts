@@ -44,3 +44,14 @@ export const updateMenuItem = asyncHandler(async (req: Request, res: Response) =
   sendSuccess(res, item, 'Menu item updated successfully');
 });
 
+export const deleteMenuItem = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const deleted = await storeService.deleteMenuItem(id);
+  if (!deleted) {
+    sendError(res, 'Menu item not found', 404);
+    return;
+  }
+  sendSuccess(res, { success: true }, 'Menu item deleted successfully');
+});
+
+

@@ -6,6 +6,7 @@ import {
   getMenuItemById,
   createMenuItem,
   updateMenuItem,
+  deleteMenuItem,
 } from '../controllers/menu.controller.js';
 
 const router = Router();
@@ -20,5 +21,7 @@ router.get('/items/:id', getMenuItemById);
 router.post('/items', createMenuItem);
 router.put('/items/:id', updateMenuItem);
 router.patch('/items/:id', updateMenuItem);
+router.delete('/items/:id', deleteMenuItem);
 
 export default router;
+

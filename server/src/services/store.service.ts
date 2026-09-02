@@ -10,6 +10,7 @@ import {
   AnalyticsSummary,
   TableStatus,
   OrderStatus,
+  StaffUser,
 } from '../types/index.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -193,10 +194,31 @@ function mapOrder(row: any): Order {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapStaffUser(row: any): StaffUser {
+  return {
+    id: row.id,
+    hotelId: row.hotel_id,
+    name: row.name,
+    email: row.email ?? undefined,
+    role: row.role,
+    pinCode: row.pin_code,
+    isActive: row.is_active,
+    createdAt: row.created_at ?? undefined,
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // In-Memory Fallback Store
 // (Guarantees 100% uptime if Supabase schema is not yet migrated)
 // ─────────────────────────────────────────────────────────────────────────────
+let fallbackStaff: StaffUser[] = [
+  { id: 'W-101', hotelId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', name: 'Marco Rossi', role: 'waiter', pinCode: '1001', isActive: true },
+  { id: 'W-102', hotelId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', name: 'Sophia Chen', role: 'waiter', pinCode: '1002', isActive: true },
+  { id: 'W-103', hotelId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', name: 'David Miller', role: 'waiter', pinCode: '1003', isActive: true },
+  { id: 'W-104', hotelId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', name: 'Emma Watson', role: 'waiter', pinCode: '1004', isActive: true },
+];
+
 let fallbackHotel: Hotel = {
   id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
   name: 'POS Project Bistro',
@@ -781,6 +803,31 @@ class StoreService {
     return newTbl;
   }
 
+  async deleteTable(id: string): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        const { error } = await supabase.from('dining_tables').delete().eq('id', id);
+        if (!error) {
+          cache.invalidate('tables:');
+          cache.invalidate(`table:${id}`);
+          return true;
+        }
+      } catch (err: any) {
+        console.warn('⚠️  deleteTable (Supabase):', err?.message || err);
+      }
+    }
+
+    const idx = fallbackTables.findIndex((t) => t.id === id);
+    if (idx > -1) {
+      fallbackTables.splice(idx, 1);
+      cache.invalidate('tables:');
+      cache.invalidate(`table:${id}`);
+      return true;
+    }
+    return false;
+  }
+
   // ── Categories ─────────────────────────────────────────────────────────────
   async getCategories(hotelId?: string): Promise<Category[]> {
     const cacheKey = `categories:${hotelId ?? 'all'}`;
@@ -1002,6 +1049,117 @@ class StoreService {
       return fallbackMenuItems[idx];
     }
     return null;
+  }
+
+  async deleteMenuItem(id: string): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        const { error } = await supabase.from('menu_items').delete().eq('id', id);
+        if (!error) {
+          cache.invalidate('menu:');
+          cache.invalidate(`menuitem:${id}`);
+          return true;
+        }
+      } catch (err: any) {
+        console.warn('⚠️  deleteMenuItem (Supabase):', err?.message || err);
+      }
+    }
+
+    const idx = fallbackMenuItems.findIndex((i) => i.id === id);
+    if (idx > -1) {
+      fallbackMenuItems.splice(idx, 1);
+      cache.invalidate('menu:');
+      cache.invalidate(`menuitem:${id}`);
+      return true;
+    }
+    return false;
+  }
+
+  // ── Staff & Waiters ────────────────────────────────────────────────────────
+  async getStaffUsers(hotelId?: string): Promise<StaffUser[]> {
+    const cacheKey = `staff:${hotelId ?? 'all'}`;
+    const cached = cache.get<StaffUser[]>(cacheKey);
+    if (cached) return cached;
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        let query = supabase.from('staff_users').select('*').order('name');
+        if (hotelId) query = query.eq('hotel_id', hotelId);
+        const { data, error } = await query;
+        if (!error && data && data.length > 0) {
+          const staff = data.map(mapStaffUser);
+          cache.set(cacheKey, staff, TTL.TABLES);
+          return staff;
+        }
+      } catch (err: any) {
+        console.warn('⚠️  getStaffUsers (Supabase):', err?.message || err);
+      }
+    }
+
+    const filtered = hotelId ? fallbackStaff.filter((s) => s.hotelId === hotelId) : fallbackStaff;
+    cache.set(cacheKey, filtered, TTL.TABLES);
+    return filtered;
+  }
+
+  async addStaffUser(staff: Omit<StaffUser, 'id' | 'createdAt'>): Promise<StaffUser> {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('staff_users')
+          .insert({
+            hotel_id: staff.hotelId,
+            name: staff.name,
+            email: staff.email ?? null,
+            role: staff.role,
+            pin_code: staff.pinCode,
+            is_active: staff.isActive,
+          })
+          .select()
+          .single();
+
+        if (!error && data) {
+          cache.invalidate('staff:');
+          return mapStaffUser(data);
+        }
+      } catch (err: any) {
+        console.warn('⚠️  addStaffUser (Supabase):', err?.message || err);
+      }
+    }
+
+    const newStaff: StaffUser = {
+      id: `W-${100 + fallbackStaff.length + 1}`,
+      ...staff,
+      createdAt: new Date().toISOString(),
+    };
+    fallbackStaff.push(newStaff);
+    cache.invalidate('staff:');
+    return newStaff;
+  }
+
+  async deleteStaffUser(id: string): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        const { error } = await supabase.from('staff_users').delete().eq('id', id);
+        if (!error) {
+          cache.invalidate('staff:');
+          return true;
+        }
+      } catch (err: any) {
+        console.warn('⚠️  deleteStaffUser (Supabase):', err?.message || err);
+      }
+    }
+
+    const idx = fallbackStaff.findIndex((s) => s.id === id);
+    if (idx > -1) {
+      fallbackStaff.splice(idx, 1);
+      cache.invalidate('staff:');
+      return true;
+    }
+    return false;
   }
 
   // ── Orders ─────────────────────────────────────────────────────────────────

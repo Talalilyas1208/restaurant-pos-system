@@ -34,3 +34,14 @@ export const createTable = asyncHandler(async (req: Request, res: Response) => {
   sendSuccess(res, newTable, 'Table created successfully', 201);
 });
 
+export const deleteTable = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const deleted = await storeService.deleteTable(id);
+  if (!deleted) {
+    sendError(res, 'Table not found', 404);
+    return;
+  }
+  sendSuccess(res, { success: true }, 'Table deleted successfully');
+});
+
+
