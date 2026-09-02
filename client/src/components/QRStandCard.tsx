@@ -28,28 +28,28 @@ export default function QRStandCard({ table, hotel, originUrl = 'http://localhos
   return (
     <Badge.Ribbon
       text={`TABLE ${table.tableNumber}`}
-      color="#f97316"
-      className="!font-bold !text-xs !shadow-md"
+      color="#ea580c"
+      className="!font-black !text-xs !rounded-bl-xl !shadow-sm"
     >
       <Card
         hoverable
-        className="!bg-slate-900 !border-slate-800 hover:!border-orange-500/50 !rounded-2xl transition-all shadow-xl"
+        className="!bg-white !border-slate-200/90 hover:!border-orange-400 !rounded-3xl transition-all shadow-sm hover:shadow-md"
         styles={{ body: { padding: '20px' } }}
       >
         <div className="flex flex-col items-center text-center space-y-4">
           {/* Printable Stand Frame */}
-          <div className="w-full bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 p-5 rounded-2xl border-2 border-orange-500/30 shadow-2xl text-white space-y-3">
+          <div className="w-full bg-slate-50 p-5 rounded-2xl border-2 border-orange-200 shadow-inner text-slate-900 space-y-3">
             {/* Header */}
             <div className="space-y-1">
-              <div className="w-9 h-9 mx-auto rounded-xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-orange-400">
+              <div className="w-10 h-10 mx-auto rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center text-white shadow-md shadow-orange-500/20">
                 <Utensils className="w-4 h-4" />
               </div>
-              <h4 className="font-bold text-sm text-white">{hotel.name}</h4>
-              <p className="text-[10px] text-slate-400">Contactless Digital Ordering</p>
+              <h4 className="font-black text-sm text-slate-900">{hotel.name}</h4>
+              <p className="text-[10px] font-bold text-orange-600">Contactless Digital Ordering</p>
             </div>
 
             {/* QR Code */}
-            <div className="p-2.5 bg-white rounded-xl shadow-inner mx-auto inline-block border border-orange-300">
+            <div className="p-3 bg-white rounded-2xl shadow-sm mx-auto inline-block border border-slate-200">
               <QRCodeSVG
                 value={menuUrl}
                 size={140}
@@ -72,20 +72,20 @@ export default function QRStandCard({ table, hotel, originUrl = 'http://localhos
 
             {/* Instructions */}
             <div className="space-y-1">
-              <Tag color="orange" className="!font-bold !text-xs !px-3 !py-0.5 !rounded-full">
+              <Tag color="orange" className="!font-black !text-xs !px-3 !py-0.5 !rounded-md">
                 {table.section} &bull; {table.capacity} Seats
               </Tag>
-              <p className="text-[10px] text-slate-300 leading-tight">
+              <p className="text-[10px] text-slate-500 font-semibold leading-tight">
                 Scan with smartphone camera to view menu & order directly.
               </p>
             </div>
 
             {/* Wi-Fi footer */}
-            <div className="pt-2 border-t border-slate-700/60 flex items-center justify-between text-[10px] text-slate-400 px-1">
-              <span className="flex items-center gap-1 text-emerald-400">
+            <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-[10px] text-slate-500 px-1">
+              <span className="flex items-center gap-1 text-emerald-600 font-bold">
                 <WifiOutlined /> Guest Wi-Fi
               </span>
-              <Tag color={statusColor} className="!m-0 !text-[10px] capitalize">
+              <Tag color={statusColor} className="!m-0 !text-[10px] capitalize font-bold !rounded-md">
                 {table.status}
               </Tag>
             </div>
@@ -102,7 +102,7 @@ export default function QRStandCard({ table, hotel, originUrl = 'http://localhos
               <Button
                 block
                 icon={<EyeOutlined />}
-                className="!text-xs !h-9 !rounded-xl !border-slate-700 !bg-slate-800 !text-slate-200 hover:!border-orange-500"
+                className="!text-xs !h-9 !rounded-xl !border-slate-200 !bg-slate-100 !text-slate-800 font-bold hover:!border-orange-400"
               >
                 Preview Menu
               </Button>
@@ -111,7 +111,7 @@ export default function QRStandCard({ table, hotel, originUrl = 'http://localhos
               type="primary"
               icon={<PrinterOutlined />}
               onClick={handlePrintCard}
-              className="!text-xs !h-9 !rounded-xl !bg-orange-500 !shadow-md !shadow-orange-500/20"
+              className="!text-xs !h-9 !rounded-xl !bg-gradient-to-r !from-orange-500 !to-amber-500 hover:!from-orange-600 !font-bold border-0 text-white"
             >
               Print Stand
             </Button>

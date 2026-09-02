@@ -6,8 +6,8 @@ import Navbar from '../components/Navbar';
 import '../styles/globals.css';
 
 export const metadata: Metadata = {
-  title: 'Grand Horizon POS & QR Code Digital Menu',
-  description: 'Fullstack Point of Sale, Kitchen Display & Contactless QR Menu Platform for Hotels & Restaurants with Ant Design & Tailwind CSS',
+  title: 'POS Project — Restaurant POS & Digital QR Menu',
+  description: 'Fullstack Point of Sale, Kitchen Display & Contactless QR Menu Platform with Ant Design & Tailwind CSS',
 };
 
 export default function RootLayout({
@@ -16,8 +16,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-orange-500 selection:text-white">
+    <html lang="en">
+      <body className="bg-slate-50 text-slate-900 min-h-screen flex flex-col font-sans antialiased selection:bg-orange-500 selection:text-white">
         <AntdRegistry>
           <Providers>
             <Navbar />

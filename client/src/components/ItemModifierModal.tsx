@@ -64,20 +64,20 @@ export default function ItemModifierModal({ item, isOpen, onClose, onConfirm }: 
       footer={null}
       width={540}
       centered
-      className="ant-modal-luxury"
+      styles={{ body: { backgroundColor: '#ffffff', borderRadius: 24, padding: 24 } }}
       title={
         <div className="flex items-center justify-between pr-6">
-          <span className="font-bold text-lg text-slate-100">{item.name}</span>
-          <Tag color="orange" className="!text-sm !font-bold">
+          <span className="font-black text-lg text-slate-900">{item.name}</span>
+          <Tag color="orange" className="!text-sm !font-black !rounded-md">
             ${item.price.toFixed(2)}
           </Tag>
         </div>
       }
     >
-      <div className="space-y-4 pt-2">
+      <div className="space-y-4 pt-2 text-slate-900">
         {/* Item Image */}
         {item.imageUrl && (
-          <div className="h-44 w-full rounded-2xl overflow-hidden relative shadow-inner bg-slate-800 flex items-center justify-center">
+          <div className="h-44 w-full rounded-2xl overflow-hidden relative shadow-sm bg-slate-100 border border-slate-200 flex items-center justify-center">
             <img
               src={item.imageUrl}
               alt={item.name}
@@ -87,16 +87,16 @@ export default function ItemModifierModal({ item, isOpen, onClose, onConfirm }: 
               }}
             />
             <div className="absolute top-2 left-2 flex gap-1.5">
-              {item.isChefSpecial && <Tag color="gold">Chef Special</Tag>}
-              {item.isSpicy && <Tag color="error">Spicy</Tag>}
-              {item.isVeg && <Tag color="success">Vegetarian</Tag>}
+              {item.isChefSpecial && <Tag color="gold" className="!font-bold !rounded-md">Chef Special</Tag>}
+              {item.isSpicy && <Tag color="error" className="!font-bold !rounded-md">Spicy</Tag>}
+              {item.isVeg && <Tag color="success" className="!font-bold !rounded-md">Vegetarian</Tag>}
             </div>
           </div>
         )}
 
         {/* Description */}
         {item.description && (
-          <Paragraph className="!text-slate-300 !text-sm leading-relaxed !mb-2">
+          <Paragraph className="!text-slate-600 !text-sm leading-relaxed !mb-2">
             {item.description}
           </Paragraph>
         )}
@@ -110,18 +110,18 @@ export default function ItemModifierModal({ item, isOpen, onClose, onConfirm }: 
             return (
               <div
                 key={modGroup.id}
-                className="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-2.5"
+                className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2.5"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-sm text-slate-200">
+                  <span className="font-black text-sm text-slate-900">
                     {modGroup.name}{' '}
                     {modGroup.isRequired ? (
-                      <Tag color="error" className="!text-[10px]">Required</Tag>
+                      <Tag color="error" className="!text-[10px] !font-bold !rounded-md">Required</Tag>
                     ) : (
-                      <Tag color="default" className="!text-[10px]">Optional</Tag>
+                      <Tag color="default" className="!text-[10px] !rounded-md">Optional</Tag>
                     )}
                   </span>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-slate-500 font-semibold">
                     {isSingleSelect ? 'Choose 1 option' : `Select up to ${modGroup.maxSelection}`}
                   </span>
                 </div>
@@ -139,13 +139,13 @@ export default function ItemModifierModal({ item, isOpen, onClose, onConfirm }: 
                       {modGroup.options.map((opt) => (
                         <div
                           key={opt.name}
-                          className="flex items-center justify-between bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/60 hover:border-orange-500/50 cursor-pointer"
+                          className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-slate-200 hover:border-orange-400 cursor-pointer shadow-sm"
                           onClick={() => handleSingleSelect(modGroup.name, opt.name, opt.price)}
                         >
-                          <Radio value={opt.name} className="!text-slate-200 !text-sm">
+                          <Radio value={opt.name} className="!text-slate-800 !text-sm font-bold">
                             {opt.name}
                           </Radio>
-                          <span className="text-xs font-semibold text-orange-400">
+                          <span className="text-xs font-black text-orange-600">
                             {opt.price > 0 ? `+$${opt.price.toFixed(2)}` : 'Included'}
                           </span>
                         </div>
@@ -161,18 +161,18 @@ export default function ItemModifierModal({ item, isOpen, onClose, onConfirm }: 
                       return (
                         <div
                           key={opt.name}
-                          className="flex items-center justify-between bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/60 hover:border-orange-500/50"
+                          className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-slate-200 hover:border-orange-400 shadow-sm"
                         >
                           <Checkbox
                             checked={isChecked}
                             onChange={(e) =>
                               handleMultiSelect(modGroup.name, opt.name, opt.price, e.target.checked)
                             }
-                            className="!text-slate-200 !text-sm"
+                            className="!text-slate-800 !text-sm font-bold"
                           >
                             {opt.name}
                           </Checkbox>
-                          <span className="text-xs font-semibold text-orange-400">
+                          <span className="text-xs font-black text-orange-600">
                             {opt.price > 0 ? `+$${opt.price.toFixed(2)}` : 'Included'}
                           </span>
                         </div>
@@ -185,51 +185,48 @@ export default function ItemModifierModal({ item, isOpen, onClose, onConfirm }: 
           })
         ) : null}
 
-        {/* Special Instructions */}
-        <div className="space-y-1.5">
-          <Text className="!text-xs !font-semibold !text-slate-300 uppercase tracking-wider">
-            Special Kitchen Notes
-          </Text>
+        {/* Special Kitchen Instructions */}
+        <div className="space-y-1">
+          <label className="text-xs font-bold text-slate-700 block">Special Instructions</label>
           <TextArea
             rows={2}
+            placeholder="e.g. No onions, sauce on the side..."
             value={instructions}
             onChange={(e) => setInstructions(e.target.value)}
-            placeholder="e.g., Dressing on the side, extra crispy, sauce separate..."
-            className="!bg-slate-800/90 !border-slate-700 !rounded-xl !text-slate-200"
+            className="!rounded-xl font-medium"
           />
         </div>
 
-        <Divider className="!border-slate-800 !my-3" />
+        <Divider className="!border-slate-200 !my-3" />
 
-        {/* Footer Quantity & Add to Cart */}
-        <div className="flex items-center justify-between gap-4 pt-1">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 font-medium">Quantity:</span>
-            <div className="flex items-center bg-slate-800 border border-slate-700 rounded-xl p-1">
-              <Button
-                size="small"
-                type="text"
-                icon={<MinusOutlined />}
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="!text-slate-300 hover:!text-white"
-              />
-              <span className="w-8 text-center font-bold text-sm text-white">{quantity}</span>
-              <Button
-                size="small"
-                type="text"
-                icon={<PlusOutlined />}
-                onClick={() => setQuantity((q) => q + 1)}
-                className="!text-slate-300 hover:!text-white"
-              />
-            </div>
+        {/* Bottom Total & Add CTA */}
+        <div className="flex items-center justify-between pt-1">
+          {/* Quantity Controls */}
+          <div className="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200">
+            <Button
+              size="small"
+              type="text"
+              icon={<MinusOutlined />}
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              className="!text-slate-700 font-bold"
+            />
+            <span className="w-8 text-center text-sm font-black text-slate-900">{quantity}</span>
+            <Button
+              size="small"
+              type="text"
+              icon={<PlusOutlined />}
+              onClick={() => setQuantity((q) => q + 1)}
+              className="!text-slate-700 font-bold"
+            />
           </div>
 
+          {/* Confirm Button */}
           <Button
             type="primary"
             size="large"
             icon={<ShoppingCartOutlined />}
             onClick={handleConfirm}
-            className="!bg-gradient-to-r !from-orange-500 !to-amber-600 hover:!from-orange-600 hover:!to-amber-700 !font-bold !h-12 !px-6 !rounded-xl !shadow-lg !shadow-orange-500/25"
+            className="!h-11 !px-6 !rounded-xl !bg-gradient-to-r !from-orange-500 via-rose-500 to-amber-500 hover:!opacity-95 !font-black !text-sm !shadow-md border-0 text-white"
           >
             Add to Order &bull; ${totalPrice.toFixed(2)}
           </Button>

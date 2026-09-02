@@ -63,6 +63,13 @@ import ReceiptModal from '../../components/ReceiptModal';
 
 const { Text, Title } = Typography;
 
+const WAITERS = [
+  { id: 'W-101', name: 'Marco Rossi' },
+  { id: 'W-102', name: 'Sophia Chen' },
+  { id: 'W-103', name: 'David Miller' },
+  { id: 'W-104', name: 'Emma Watson' },
+];
+
 export default function POSTerminalPage() {
   // ── Typed Redux hooks ────────────────────────────────────────────────────────
   const dispatch = useAppDispatch();
@@ -74,6 +81,9 @@ export default function POSTerminalPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'menu' | 'tables'>('menu');
+
+  // Receiving Waiter state
+  const [selectedWaiter, setSelectedWaiter] = useState<{ id: string; name: string }>(WAITERS[0]);
 
   // Modals state
   const [selectedItemForMod, setSelectedItemForMod] = useState<MenuItem | null>(null);
@@ -120,10 +130,10 @@ export default function POSTerminalPage() {
   useEffect(() => {
     const totalQty = cart.items.reduce((sum, i) => sum + i.quantity, 0);
     document.title = totalQty > 0
-      ? `(${totalQty}) Order Ticket — Grand Horizon POS`
-      : 'Grand Horizon POS';
+      ? `(${totalQty}) Order Ticket — POS Project`
+      : 'POS Project Terminal';
     return () => {
-      document.title = 'Grand Horizon POS';
+      document.title = 'POS Project Terminal';
     };
   }, [cart.items]);
 
@@ -258,6 +268,8 @@ export default function POSTerminalPage() {
         source: 'pos',
         customerName: cart.customerName || 'Guest',
         customerNotes: cart.customerNotes,
+        serverStaffId: selectedWaiter.id,
+        serverStaffName: selectedWaiter.name,
         discountAmount,
         items: cart.items.map((i) => ({
           menuItemId: i.menuItemId,
@@ -298,11 +310,11 @@ export default function POSTerminalPage() {
   ];
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row h-[calc(100vh-4rem)] overflow-hidden bg-slate-950 text-slate-100">
+    <div className="flex-1 flex flex-col lg:flex-row h-[calc(100vh-4rem)] overflow-hidden bg-slate-100 text-slate-900">
       {/* LEFT / CENTER: Catalog & Tables */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden border-r border-slate-800">
+      <div className="flex-1 flex flex-col h-full overflow-hidden border-r border-slate-200 bg-slate-50">
         {/* Top Controls */}
-        <div className="p-4 border-b border-slate-800 bg-slate-900/60 flex flex-wrap items-center justify-between gap-3">
+        <div className="p-4 border-b border-slate-200 bg-white flex flex-wrap items-center justify-between gap-3 shadow-sm">
           <div className="flex items-center gap-2">
             <Segmented
               size="large"
@@ -315,7 +327,7 @@ export default function POSTerminalPage() {
                     <span className="flex items-center gap-1.5">
                       <span>Floor Tables</span>
                       {cart.tableNumber && (
-                        <Tag color="orange" className="!m-0 !font-bold !text-[11px]">
+                        <Tag color="orange" className="!m-0 !font-black !text-[11px] !rounded-md">
                           {cart.tableNumber}
                         </Tag>
                       )}
@@ -325,7 +337,7 @@ export default function POSTerminalPage() {
                   icon: <TableOutlined />,
                 },
               ]}
-              className="!bg-slate-800 !p-1 !rounded-xl !border !border-slate-700"
+              className="!bg-slate-100 !p-1 !rounded-2xl !border !border-slate-200 !font-bold text-slate-700"
             />
           </div>
 
@@ -333,22 +345,22 @@ export default function POSTerminalPage() {
             <div className="flex-1 max-w-md">
               <Input
                 placeholder="Search dishes by name or ingredients..."
-                prefix={<SearchOutlined className="text-slate-400 mr-1" />}
+                prefix={<SearchOutlined className="text-slate-400 mr-1.5" />}
                 allowClear
                 size="large"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="!bg-slate-800/90 !border-slate-700 !rounded-xl !text-slate-100"
+                className="!bg-slate-100 !border-slate-200 !rounded-2xl !text-slate-800 focus:!bg-white"
               />
             </div>
           )}
 
           {/* Connectivity indicator */}
           <Tooltip title={isOnline ? 'Connected to server' : 'Offline — showing cached data'}>
-            <div className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border ${
+            <div className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border ${
               isOnline
-                ? 'text-emerald-400 border-emerald-500/30 bg-emerald-950/30'
-                : 'text-rose-400 border-rose-500/30 bg-rose-950/30'
+                ? 'text-emerald-700 border-emerald-200 bg-emerald-50'
+                : 'text-rose-700 border-rose-200 bg-rose-50'
             }`}>
               {isOnline ? <WifiOutlined /> : <DisconnectOutlined />}
               {isOnline ? 'Online' : 'Offline'}
@@ -360,7 +372,7 @@ export default function POSTerminalPage() {
         {activeTab === 'menu' ? (
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Category Tabs */}
-            <div className="px-4 bg-slate-900/40 border-b border-slate-800">
+            <div className="px-4 bg-white border-b border-slate-200">
               <Tabs
                 activeKey={selectedCategoryId}
                 onChange={(k) => setSelectedCategoryId(k)}
@@ -378,12 +390,12 @@ export default function POSTerminalPage() {
                   <Card
                     hoverable
                     onClick={() => handleItemClick(item)}
-                    className="!bg-slate-900/90 hover:!bg-slate-800/90 !border-slate-800 hover:!border-orange-500/50 !rounded-2xl transition-all shadow-md hover:shadow-xl h-full flex flex-col justify-between select-none"
+                    className="!bg-white hover:!bg-slate-50/80 !border-slate-200/90 hover:!border-orange-400 !rounded-3xl transition-all shadow-sm hover:shadow-md h-full flex flex-col justify-between select-none overflow-hidden"
                     styles={{ body: { padding: '12px', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' } }}
                   >
                     {/* Item Image */}
                     <div>
-                      <div className="relative h-28 w-full rounded-xl overflow-hidden mb-2.5 bg-slate-800 flex items-center justify-center">
+                      <div className="relative h-28 w-full rounded-2xl overflow-hidden mb-2.5 bg-slate-100 border border-slate-100 flex items-center justify-center">
                         {item.imageUrl ? (
                           <img
                             src={item.imageUrl}
@@ -394,19 +406,19 @@ export default function POSTerminalPage() {
                             }}
                           />
                         ) : null}
-                        <div className="absolute inset-0 flex items-center justify-center text-slate-600 -z-0">
-                          <Utensils className="w-8 h-8 opacity-40" />
+                        <div className="absolute inset-0 flex items-center justify-center text-slate-400 -z-0">
+                          <Utensils className="w-8 h-8 opacity-30" />
                         </div>
 
                         {/* Top Tag Pills */}
                         <div className="absolute top-1.5 left-1.5 flex flex-wrap gap-1">
-                          {item.isChefSpecial && <Tag color="gold" className="!m-0 !text-[10px] !font-bold">Special</Tag>}
-                          {item.isSpicy && <Tag color="error" className="!m-0 !text-[10px]">Spicy</Tag>}
-                          {item.isVeg && <Tag color="success" className="!m-0 !text-[10px]">Veg</Tag>}
+                          {item.isChefSpecial && <Tag color="gold" className="!m-0 !text-[10px] !font-black !rounded-md">Special</Tag>}
+                          {item.isSpicy && <Tag color="error" className="!m-0 !text-[10px] !font-bold !rounded-md">Spicy</Tag>}
+                          {item.isVeg && <Tag color="success" className="!m-0 !text-[10px] !font-bold !rounded-md">Veg</Tag>}
                         </div>
 
                         {hasModifiers && (
-                          <div className="absolute bottom-1.5 right-1.5 bg-black/75 backdrop-blur text-[10px] px-2 py-0.5 rounded-md text-orange-300 font-semibold">
+                          <div className="absolute bottom-1.5 right-1.5 bg-slate-900/80 backdrop-blur text-[10px] px-2 py-0.5 rounded-md text-amber-300 font-bold">
                             Options
                           </div>
                         )}
@@ -414,18 +426,18 @@ export default function POSTerminalPage() {
 
                       {/* Info */}
                       <div className="space-y-1">
-                        <h4 className="font-bold text-sm text-slate-100 line-clamp-1">
+                        <h4 className="font-black text-sm text-slate-900 line-clamp-1">
                           {item.name}
                         </h4>
-                        <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
                           {item.description || 'Gourmet freshly made dish.'}
                         </p>
                       </div>
                     </div>
 
                     {/* Price & Add */}
-                    <div className="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-between">
-                      <span className="font-extrabold text-base text-white">
+                    <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                      <span className="font-black text-base text-slate-900">
                         ${item.price.toFixed(2)}
                       </span>
                       <Button
@@ -433,7 +445,7 @@ export default function POSTerminalPage() {
                         shape="circle"
                         size="small"
                         icon={<PlusOutlined />}
-                        className="!bg-orange-500 hover:!bg-orange-600 !shadow-md !shadow-orange-500/20"
+                        className="!bg-gradient-to-r !from-orange-500 !to-amber-500 hover:!from-orange-600 !shadow-sm border-0"
                       />
                     </div>
                   </Card>
@@ -442,7 +454,7 @@ export default function POSTerminalPage() {
                 return (
                   <div key={item.id}>
                     {item.isChefSpecial ? (
-                      <Badge.Ribbon text="Chef Pick" color="#f59e0b" className="!font-bold !text-[10px]">
+                      <Badge.Ribbon text="Chef Pick" color="#f59e0b" className="!font-black !text-[10px] !rounded-bl-xl">
                         {cardContent}
                       </Badge.Ribbon>
                     ) : (
@@ -456,15 +468,15 @@ export default function POSTerminalPage() {
         ) : (
           /* Floor Tables Grid */
           <div className="flex-1 p-6 overflow-y-auto space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
               <div>
-                <h3 className="font-bold text-lg text-white">Dining Tables & Hotel Rooms</h3>
-                <p className="text-xs text-slate-400">Click a table to link current cashier order</p>
+                <h3 className="font-black text-lg text-slate-900">Dining Tables & Hotel Rooms</h3>
+                <p className="text-xs font-semibold text-slate-500">Click a table to link current order ticket</p>
               </div>
               <Space>
-                <Tag color="success">Available</Tag>
-                <Tag color="warning">Occupied</Tag>
-                <Tag color="processing">Billed</Tag>
+                <Tag color="success" className="!font-bold !rounded-md">Available</Tag>
+                <Tag color="warning" className="!font-bold !rounded-md">Occupied</Tag>
+                <Tag color="processing" className="!font-bold !rounded-md">Billed</Tag>
               </Space>
             </div>
 
@@ -473,22 +485,22 @@ export default function POSTerminalPage() {
                 const isSelected = cart.tableId === tbl.id;
                 const statusColor =
                   tbl.status === 'available'
-                    ? 'border-emerald-500/40 bg-emerald-950/20 text-emerald-300'
+                    ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
                     : tbl.status === 'occupied'
-                    ? 'border-amber-500/40 bg-amber-950/20 text-amber-300'
-                    : 'border-sky-500/40 bg-sky-950/20 text-sky-300';
+                    ? 'border-amber-300 bg-amber-50 text-amber-800'
+                    : 'border-blue-300 bg-blue-50 text-blue-800';
 
                 return (
                   <div
                     key={tbl.id}
                     onClick={() => handleSelectTable(tbl)}
-                    className={`p-5 rounded-2xl border-2 flex flex-col items-center text-center space-y-2 cursor-pointer transition-all hover:scale-105 shadow-lg ${statusColor} ${
-                      isSelected ? 'ring-2 ring-orange-500 shadow-2xl scale-105' : ''
+                    className={`p-5 rounded-3xl border-2 flex flex-col items-center text-center space-y-2 cursor-pointer transition-all hover:scale-105 shadow-sm ${statusColor} ${
+                      isSelected ? 'ring-4 ring-orange-500 shadow-lg scale-105' : ''
                     }`}
                   >
                     <div className="text-2xl font-black">{tbl.tableNumber}</div>
-                    <span className="text-xs opacity-80">{tbl.section}</span>
-                    <Tag color={tbl.status === 'available' ? 'success' : tbl.status === 'occupied' ? 'warning' : 'processing'}>
+                    <span className="text-xs font-semibold opacity-80">{tbl.section}</span>
+                    <Tag color={tbl.status === 'available' ? 'success' : tbl.status === 'occupied' ? 'warning' : 'processing'} className="!rounded-md !font-bold">
                       {tbl.capacity} Seats &bull; {tbl.status}
                     </Tag>
                   </div>
@@ -499,16 +511,16 @@ export default function POSTerminalPage() {
         )}
       </div>
 
-      {/* RIGHT PANEL: Cart & Fast Checkout */}
-      <div className="w-full lg:w-[420px] bg-slate-900 flex flex-col h-full overflow-hidden shadow-2xl">
+      {/* RIGHT PANEL: Cart & Fast Checkout (White surface + High Contrast) */}
+      <div className="w-full lg:w-[420px] bg-white flex flex-col h-full overflow-hidden shadow-xl border-l border-slate-200">
         {/* Cart Header */}
-        <div className="p-4 border-b border-slate-800 bg-slate-900/90 space-y-3">
+        <div className="p-4 border-b border-slate-200 bg-slate-50/80 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ShoppingCartOutlined className="text-xl text-orange-400" />
-              <span className="font-bold text-base text-white">Order Ticket</span>
+              <ShoppingCartOutlined className="text-xl text-orange-600" />
+              <span className="font-black text-base text-slate-900">Order Ticket</span>
               {cart.tableNumber && (
-                <Tag color="orange" className="!font-bold !text-xs">
+                <Tag color="orange" className="!font-black !text-xs !rounded-md">
                   {cart.tableNumber}
                 </Tag>
               )}
@@ -521,11 +533,38 @@ export default function POSTerminalPage() {
                 size="small"
                 icon={<DeleteOutlined />}
                 onClick={() => dispatch(clearCart())}
-                className="!text-xs"
+                className="!text-xs font-bold"
               >
                 Clear
               </Button>
             )}
+          </div>
+
+          {/* Assigned Receiving Waiter */}
+          <div className="flex items-center gap-2 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="w-7 h-7 rounded-xl bg-orange-100 border border-orange-200 flex items-center justify-center text-orange-600 flex-shrink-0">
+              <UserOutlined className="text-xs" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Receiving Waiter</span>
+              <Select
+                size="small"
+                variant="borderless"
+                value={selectedWaiter.id}
+                onChange={(val) => {
+                  const found = WAITERS.find((w) => w.id === val);
+                  if (found) setSelectedWaiter(found);
+                }}
+                options={WAITERS.map((w) => ({
+                  value: w.id,
+                  label: `${w.name} (${w.id})`,
+                }))}
+                className="w-full !p-0 font-bold text-slate-900"
+              />
+            </div>
+            <Tag color="orange" className="!m-0 !font-mono !font-bold text-[10px] !rounded-md">
+              {selectedWaiter.id}
+            </Tag>
           </div>
 
           {/* Dining Type & Guest Name */}
@@ -539,36 +578,37 @@ export default function POSTerminalPage() {
                 { label: 'Takeaway', value: 'takeaway' },
                 { label: 'Room Service', value: 'room_service' },
               ]}
-              className="w-full"
+              className="w-full font-bold"
             />
             <Input
               size="middle"
               placeholder="Guest Name"
-              prefix={<UserOutlined className="text-slate-500" />}
+              prefix={<UserOutlined className="text-slate-400" />}
               value={cart.customerName}
               onChange={(e) => dispatch(setCustomerInfo({ customerName: e.target.value }))}
+              className="!rounded-xl font-medium"
             />
           </div>
         </div>
 
         {/* Cart Item List */}
-        <div className="flex-1 p-4 overflow-y-auto space-y-3">
+        <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50/40">
           {cart.items.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center text-slate-500 p-6 space-y-2">
-              <ShoppingCartOutlined className="text-4xl text-slate-600" />
-              <p className="text-sm font-semibold text-slate-400">No items added yet</p>
+            <div className="h-full flex flex-col items-center justify-center text-center text-slate-400 p-6 space-y-2">
+              <ShoppingCartOutlined className="text-4xl text-slate-300" />
+              <p className="text-sm font-bold text-slate-700">No items added yet</p>
               <p className="text-xs text-slate-500">Tap items on the left to add to order ticket.</p>
             </div>
           ) : (
             cart.items.map((ci) => (
               <div
                 key={ci.id}
-                className="bg-slate-800/70 border border-slate-700/60 rounded-xl p-3 space-y-2 shadow-sm"
+                className="bg-white border border-slate-200/90 rounded-2xl p-3 space-y-2 shadow-sm"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
-                    <h5 className="font-bold text-sm text-slate-100">{ci.name}</h5>
-                    <span className="text-xs text-slate-400 font-medium">
+                    <h5 className="font-black text-sm text-slate-900">{ci.name}</h5>
+                    <span className="text-xs text-slate-500 font-semibold">
                       ${ci.unitPrice.toFixed(2)} each
                     </span>
 
@@ -576,7 +616,7 @@ export default function POSTerminalPage() {
                     {ci.selectedModifiers && ci.selectedModifiers.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1">
                         {ci.selectedModifiers.map((m, mi) => (
-                          <Tag key={mi} color="default" className="!text-[10px] !m-0">
+                          <Tag key={mi} color="default" className="!text-[10px] !m-0 !rounded-md">
                             {m.optionName} {m.price > 0 && `(+$${m.price.toFixed(2)})`}
                           </Tag>
                         ))}
@@ -584,17 +624,17 @@ export default function POSTerminalPage() {
                     )}
 
                     {ci.specialInstructions && (
-                      <p className="text-[11px] text-amber-300 italic mt-1">
+                      <p className="text-[11px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md italic mt-1">
                         &ldquo;{ci.specialInstructions}&rdquo;
                       </p>
                     )}
                   </div>
 
-                  <span className="font-extrabold text-sm text-white">${ci.totalPrice.toFixed(2)}</span>
+                  <span className="font-black text-sm text-slate-900">${ci.totalPrice.toFixed(2)}</span>
                 </div>
 
                 {/* Quantity Controls */}
-                <div className="flex items-center justify-between pt-1 border-t border-slate-700/50">
+                <div className="flex items-center justify-between pt-1 border-t border-slate-100">
                   <Button
                     type="text"
                     danger
@@ -603,21 +643,21 @@ export default function POSTerminalPage() {
                     onClick={() => dispatch(removeFromCart(ci.id))}
                   />
 
-                  <div className="flex items-center bg-slate-700/70 rounded-lg p-0.5">
+                  <div className="flex items-center bg-slate-100 rounded-xl p-0.5">
                     <Button
                       size="small"
                       type="text"
                       icon={<MinusOutlined />}
                       onClick={() => dispatch(updateQuantity({ id: ci.id, quantity: ci.quantity - 1 }))}
-                      className="!text-white"
+                      className="!text-slate-700 font-bold"
                     />
-                    <span className="w-7 text-center text-xs font-bold text-white">{ci.quantity}</span>
+                    <span className="w-7 text-center text-xs font-black text-slate-900">{ci.quantity}</span>
                     <Button
                       size="small"
                       type="text"
                       icon={<PlusOutlined />}
                       onClick={() => dispatch(updateQuantity({ id: ci.id, quantity: ci.quantity + 1 }))}
-                      className="!text-white"
+                      className="!text-slate-700 font-bold"
                     />
                   </div>
                 </div>
@@ -628,11 +668,11 @@ export default function POSTerminalPage() {
 
         {/* Calculation & Fast Pay */}
         {cart.items.length > 0 && (
-          <div className="p-4 border-t border-slate-800 bg-slate-900/95 space-y-3">
-            <div className="space-y-1.5 text-xs text-slate-300">
+          <div className="p-4 border-t border-slate-200 bg-white space-y-3 shadow-lg">
+            <div className="space-y-1.5 text-xs text-slate-600 font-semibold">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span className="font-bold text-slate-900">${subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Tax ({taxRate}%)</span>
@@ -653,22 +693,22 @@ export default function POSTerminalPage() {
                       size="small"
                       type={cart.discountPercent === d ? 'primary' : 'default'}
                       onClick={() => dispatch(setDiscount(d))}
-                      className="!text-[10px] !h-6 !px-2"
+                      className="!text-[10px] !h-6 !px-2 !rounded-md !font-bold"
                     >
                       {d}%
                     </Button>
                   ))}
                   {discountAmount > 0 && (
-                    <span className="text-emerald-400 font-bold ml-1">-${discountAmount.toFixed(2)}</span>
+                    <span className="text-emerald-600 font-bold ml-1">-${discountAmount.toFixed(2)}</span>
                   )}
                 </Space>
               </div>
 
-              <Divider className="!border-slate-800 !my-2" />
+              <Divider className="!border-slate-200 !my-2" />
 
-              <div className="flex items-center justify-between text-base font-bold text-white">
+              <div className="flex items-center justify-between text-base font-bold text-slate-900">
                 <span>Total Amount Due</span>
-                <span className="text-orange-400 text-2xl font-black">${grandTotal.toFixed(2)}</span>
+                <span className="text-orange-600 text-2xl font-black">${grandTotal.toFixed(2)}</span>
               </div>
             </div>
 
@@ -677,7 +717,7 @@ export default function POSTerminalPage() {
               <Button
                 icon={<SplitCellsOutlined />}
                 onClick={() => setIsSplitModalOpen(true)}
-                className="!h-12 !rounded-xl !bg-slate-800 !border-slate-700 !text-slate-200 !text-xs !font-semibold"
+                className="!h-12 !rounded-2xl !bg-slate-100 hover:!bg-slate-200 !border-slate-200 !text-slate-800 !text-xs !font-bold"
               >
                 Split Bill
               </Button>
@@ -687,7 +727,7 @@ export default function POSTerminalPage() {
                 size="large"
                 icon={<CreditCardOutlined />}
                 onClick={handleCheckoutClick}
-                className="col-span-2 !h-12 !rounded-xl !bg-gradient-to-r !from-orange-500 !to-amber-600 !font-bold !text-sm !shadow-lg !shadow-orange-500/25 flex items-center justify-between"
+                className="col-span-2 !h-12 !rounded-2xl !bg-gradient-to-r !from-orange-500 via-rose-500 to-amber-500 hover:!opacity-95 !font-black !text-sm !shadow-lg !shadow-orange-500/25 flex items-center justify-between border-0 text-white"
               >
                 <span>Checkout & Pay</span>
                 <span>${grandTotal.toFixed(2)}</span>
@@ -723,14 +763,15 @@ export default function POSTerminalPage() {
         footer={null}
         width={460}
         centered
-        title={<span className="font-bold text-base text-slate-100">Select Settlement Method</span>}
+        styles={{ body: { backgroundColor: '#ffffff', borderRadius: 24, padding: 24 } }}
+        title={<span className="font-black text-base text-slate-900">Select Settlement Method</span>}
       >
         <div className="space-y-4 pt-2">
           {/* Total */}
-          <Card className="!bg-slate-900 !border-slate-800 text-center">
-            <span className="text-xs text-slate-400 uppercase tracking-wider block mb-1">Total Due</span>
-            <span className="text-3xl font-black text-orange-400">${grandTotal.toFixed(2)}</span>
-          </Card>
+          <div className="bg-orange-50 border border-orange-200 p-4 rounded-2xl text-center">
+            <span className="text-xs text-orange-700 font-bold uppercase tracking-wider block mb-1">Total Due</span>
+            <span className="text-3xl font-black text-orange-600">${grandTotal.toFixed(2)}</span>
+          </div>
 
           {/* Payment Method */}
           <Segmented
@@ -743,24 +784,24 @@ export default function POSTerminalPage() {
               { label: 'Credit/Debit', value: 'credit_card', icon: <CreditCardOutlined /> },
               { label: 'Room Bill', value: 'room_charge', icon: <BankOutlined /> },
             ]}
-            className="!bg-slate-900 !p-1.5 !rounded-xl !border !border-slate-800"
+            className="!bg-slate-100 !p-1.5 !rounded-2xl !border !border-slate-200 font-bold"
           />
 
           {/* Cash Input */}
           {paymentMethod === 'cash' && (
-            <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2">
-              <label className="text-xs text-slate-300 font-semibold block">Cash Tendered ($)</label>
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+              <label className="text-xs text-slate-700 font-bold block">Cash Tendered ($)</label>
               <InputNumber
                 size="large"
-                className="w-full"
+                className="w-full !rounded-xl font-bold"
                 min={grandTotal}
                 step={1}
                 value={cashTendered}
                 onChange={(val) => setCashTendered(val || grandTotal)}
               />
               <div className="flex justify-between text-xs pt-1">
-                <span className="text-slate-400">Change Due:</span>
-                <span className="font-bold text-emerald-400 text-sm">
+                <span className="text-slate-500 font-medium">Change Due:</span>
+                <span className="font-black text-emerald-600 text-sm">
                   ${Math.max(0, cashTendered - grandTotal).toFixed(2)}
                 </span>
               </div>
@@ -769,22 +810,23 @@ export default function POSTerminalPage() {
 
           {/* Room Charge Input */}
           {paymentMethod === 'room_charge' && (
-            <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2">
-              <label className="text-xs text-slate-300 font-semibold block">Guest Room Number</label>
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+              <label className="text-xs text-slate-700 font-bold block">Guest Room Number</label>
               <Input
                 size="large"
                 placeholder="e.g. Room 204"
                 value={roomNumber}
                 onChange={(e) => setRoomNumber(e.target.value)}
+                className="!rounded-xl font-bold"
               />
             </div>
           )}
 
-          <Divider className="!border-slate-800 !my-3" />
+          <Divider className="!border-slate-200 !my-3" />
 
           {/* Actions */}
           <div className="flex items-center justify-end gap-3 pt-1">
-            <Button onClick={() => setIsPaymentModalOpen(false)} className="!h-10 !px-5 !rounded-xl !border-slate-700 !text-slate-300">
+            <Button onClick={() => setIsPaymentModalOpen(false)} className="!h-10 !px-5 !rounded-xl !border-slate-200 !text-slate-700 font-bold">
               Cancel
             </Button>
             <Button
@@ -793,7 +835,7 @@ export default function POSTerminalPage() {
               icon={<CheckCircleOutlined />}
               onClick={handleConfirmPayment}
               loading={processPaymentMutation.isPending}
-              className="!h-10 !px-6 !rounded-xl !bg-emerald-600 hover:!bg-emerald-500 !font-bold !shadow-lg !shadow-emerald-600/30"
+              className="!h-10 !px-6 !rounded-xl !bg-gradient-to-r !from-emerald-600 !to-teal-600 hover:!from-emerald-700 !font-bold !shadow-md !shadow-emerald-600/25 border-0 text-white"
             >
               Confirm & Settle
             </Button>

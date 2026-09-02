@@ -31,7 +31,7 @@ export default function ReceiptModal({
     window.print();
   };
 
-  const hotelName = hotel?.name || 'Grand Horizon Hotel & Bistro';
+  const hotelName = hotel?.name || 'POS Project Bistro';
   const currencySymbol = hotel?.currencySymbol || '$';
 
   return (
@@ -55,7 +55,7 @@ export default function ReceiptModal({
             {/* Business Header */}
             <div>
               <h2 className="font-bold text-base uppercase tracking-wider text-black">{hotelName}</h2>
-              <p className="text-[11px] text-gray-600">{hotel?.address || '742 Evergreen Terrace'}</p>
+              <p className="text-[11px] text-gray-600">{hotel?.address || '742 Restaurant Ave, Suite 100'}</p>
               <p className="text-[11px] text-gray-600">Tel: {hotel?.phone || '+1 (555) 234-5678'}</p>
               <div className="border-b border-dashed border-gray-400 my-2" />
             </div>
@@ -79,8 +79,8 @@ export default function ReceiptModal({
                 <span>{new Date(order.createdAt).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span>Server ID:</span>
-                <span>{order.serverStaffId || 'Terminal #1'}</span>
+                <span>Waiter / Server:</span>
+                <span className="font-bold">{order.serverStaffName ? `${order.serverStaffName} (${order.serverStaffId})` : (order.serverStaffId || 'Marco Rossi (W-101)')}</span>
               </div>
             </div>
 
