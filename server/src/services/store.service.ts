@@ -187,6 +187,7 @@ function mapOrder(row: any): Order {
     total: parseFloat(row.total),
     paymentStatus: row.payment_status,
     serverStaffId: row.server_staff_id ?? undefined,
+    serverStaffName: row.server_staff_name ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -198,17 +199,17 @@ function mapOrder(row: any): Order {
 // ─────────────────────────────────────────────────────────────────────────────
 let fallbackHotel: Hotel = {
   id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-  name: 'Grand Horizon Hotel & Bistro',
-  slug: 'grand-horizon',
-  tagline: 'Fine Dining & Luxury Hospitality',
+  name: 'POS Project Bistro',
+  slug: 'pos-project',
+  tagline: 'Modern Restaurant & Digital QR Dining',
   logoUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=150&auto=format&fit=crop&q=80',
   currency: 'USD',
   currencySymbol: '$',
   taxRate: 8.5,
   serviceChargeRate: 5.0,
-  address: '742 Evergreen Terrace, Suite 100',
+  address: '742 Restaurant Ave, Suite 100',
   phone: '+1 (555) 234-5678',
-  email: 'dining@grandhorizon.com',
+  email: 'dining@posproject.com',
   createdAt: new Date().toISOString(),
 };
 
@@ -511,6 +512,8 @@ const fallbackOrders: Order[] = [
     discountAmount: 0,
     total: 98.75,
     paymentStatus: 'unpaid',
+    serverStaffId: 'W-101',
+    serverStaffName: 'Marco Rossi',
     createdAt: new Date(Date.now() - 15 * 60000).toISOString(),
     updatedAt: new Date(Date.now() - 10 * 60000).toISOString(),
   },
@@ -519,17 +522,19 @@ const fallbackOrders: Order[] = [
     hotelId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     tableId: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b06',
     tableNumber: 'R-101',
-    orderNumber: '#GH-1002',
+    orderNumber: '#POS-1002',
     orderType: 'room_service',
     source: 'qr_customer',
     status: 'pending',
     customerName: 'Eleanor Vance',
     customerNotes: 'Please ring the doorbell and leave cart outside if needed.',
+    serverStaffId: 'W-102',
+    serverStaffName: 'Sophia Chen',
     items: [
       {
         id: 'oi-03',
         orderId: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e02',
-        name: 'The Grand Horizon Wagyu Burger',
+        name: 'The Wagyu Burger & Truffle Fries',
         unitPrice: 21.00,
         quantity: 1,
         totalPrice: 21.00,
@@ -1081,7 +1086,7 @@ class StoreService {
           .from('orders')
           .select('*', { count: 'exact', head: true })
           .eq('hotel_id', orderData.hotelId || hotel.id);
-        const orderNumber = `#GH-${1000 + (count ?? 0) + 1}`;
+        const orderNumber = `#POS-${1000 + (count ?? 0) + 1}`;
 
         const { data: orderRow, error: orderError } = await supabase
           .from('orders')
@@ -1102,6 +1107,7 @@ class StoreService {
             total,
             payment_status: 'unpaid',
             server_staff_id: orderData.serverStaffId ?? null,
+            server_staff_name: orderData.serverStaffName ?? null,
           })
           .select()
           .single();
@@ -1139,7 +1145,7 @@ class StoreService {
 
     // Fallback in-memory order creation
     const newId = `ord-${Date.now()}`;
-    const orderNumber = `#GH-${1000 + fallbackOrders.length + 1}`;
+    const orderNumber = `#POS-${1000 + fallbackOrders.length + 1}`;
     const newOrder: Order = {
       id: newId,
       hotelId: orderData.hotelId || hotel.id,
@@ -1152,6 +1158,8 @@ class StoreService {
       customerName: orderData.customerName || 'Guest',
       customerPhone: orderData.customerPhone,
       customerNotes: orderData.customerNotes,
+      serverStaffId: orderData.serverStaffId || 'W-101',
+      serverStaffName: orderData.serverStaffName || 'Marco Rossi',
       items: (orderData.items || []).map((i, idx) => ({
         id: `oi-${Date.now()}-${idx}`,
         orderId: newId,

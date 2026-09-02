@@ -121,6 +121,7 @@ export interface Order {
   total: number;
   paymentStatus: PaymentStatus;
   serverStaffId?: string;
+  serverStaffName?: string;
   createdAt: string;
   updatedAt: string;
 }
