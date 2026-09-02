@@ -56,19 +56,12 @@ import {
 import { setOnlineStatus } from '../../store/slices/posSessionSlice';
 import { api } from '../../lib/api';
 import { STALE } from '../../lib/queryClient';
-import { MenuItem, DiningTable, SelectedModifier, Order } from '../../types';
+import { MenuItem, DiningTable, SelectedModifier, Order, StaffUser } from '../../types';
 import ItemModifierModal from '../../components/ItemModifierModal';
 import SplitBillModal from '../../components/SplitBillModal';
 import ReceiptModal from '../../components/ReceiptModal';
 
 const { Text, Title } = Typography;
-
-const WAITERS = [
-  { id: 'W-101', name: 'Marco Rossi' },
-  { id: 'W-102', name: 'Sophia Chen' },
-  { id: 'W-103', name: 'David Miller' },
-  { id: 'W-104', name: 'Emma Watson' },
-];
 
 export default function POSTerminalPage() {
   // ── Typed Redux hooks ────────────────────────────────────────────────────────
@@ -80,10 +73,38 @@ export default function POSTerminalPage() {
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'menu' | 'tables'>('menu');
+  const [activeTab, setActiveTab] = useState<'menu' | 'tables' | 'cart'>('menu');
+
+  // Queries
+  const { data: hotel } = useQuery({
+    queryKey: ['hotel'],
+    queryFn: ({ signal }) => api.getHotel(undefined, signal),
+    staleTime: STALE.HOTEL,
+  });
+
+  const { data: staffList = [] } = useQuery({
+    queryKey: ['staff'],
+    queryFn: ({ signal }) => api.getStaff(signal),
+  });
+
+  const activeStaff = staffList.length > 0
+    ? staffList
+    : [
+        { id: 'W-101', name: 'Marco Rossi', hotelId: '', role: 'waiter', pinCode: '1001', isActive: true },
+        { id: 'W-102', name: 'Sophia Chen', hotelId: '', role: 'waiter', pinCode: '1002', isActive: true },
+      ];
 
   // Receiving Waiter state
-  const [selectedWaiter, setSelectedWaiter] = useState<{ id: string; name: string }>(WAITERS[0]);
+  const [selectedWaiter, setSelectedWaiter] = useState<{ id: string; name: string }>({
+    id: activeStaff[0].id,
+    name: activeStaff[0].name,
+  });
+
+  useEffect(() => {
+    if (activeStaff.length > 0 && (!selectedWaiter.id || !activeStaff.some(s => s.id === selectedWaiter.id))) {
+      setSelectedWaiter({ id: activeStaff[0].id, name: activeStaff[0].name });
+    }
+  }, [activeStaff, selectedWaiter.id]);
 
   // Modals state
   const [selectedItemForMod, setSelectedItemForMod] = useState<MenuItem | null>(null);
@@ -152,12 +173,6 @@ export default function POSTerminalPage() {
   }, []);
 
   // ── Queries (with signal for abort on unmount) ───────────────────────────────
-  const { data: hotel } = useQuery({
-    queryKey: ['hotel'],
-    queryFn: ({ signal }) => api.getHotel('grand-horizon', signal),
-    staleTime: STALE.HOTEL,
-  });
-
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: ({ signal }) => api.getCategories(signal),
@@ -308,18 +323,21 @@ export default function POSTerminalPage() {
       label: c.name,
     })),
   ];
+  const totalCartQty = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row h-[calc(100vh-4rem)] overflow-hidden bg-slate-100 text-slate-900">
+    <div className="flex-1 flex flex-col lg:flex-row h-full overflow-hidden bg-slate-100 text-slate-900 relative">
       {/* LEFT / CENTER: Catalog & Tables */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden border-r border-slate-200 bg-slate-50">
+      <div className={`flex-1 flex-col h-full overflow-hidden border-r border-slate-200 bg-slate-50 ${
+        activeTab === 'cart' ? 'hidden lg:flex' : 'flex'
+      }`}>
         {/* Top Controls */}
-        <div className="p-4 border-b border-slate-200 bg-white flex flex-wrap items-center justify-between gap-3 shadow-sm">
+        <div className="p-3 md:p-4 border-b border-slate-200 bg-white flex flex-wrap items-center justify-between gap-3 shadow-sm">
           <div className="flex items-center gap-2">
             <Segmented
               size="large"
               value={activeTab}
-              onChange={(val) => setActiveTab(val as 'menu' | 'tables')}
+              onChange={(val) => setActiveTab(val as 'menu' | 'tables' | 'cart')}
               options={[
                 { label: 'Food Menu', value: 'menu', icon: <AppstoreOutlined /> },
                 {
@@ -336,15 +354,27 @@ export default function POSTerminalPage() {
                   value: 'tables',
                   icon: <TableOutlined />,
                 },
+                {
+                  label: (
+                    <span className="lg:hidden flex items-center gap-1.5">
+                      <span>Cart</span>
+                      {totalCartQty > 0 && (
+                        <Badge count={totalCartQty} size="small" />
+                      )}
+                    </span>
+                  ),
+                  value: 'cart',
+                  icon: <ShoppingCartOutlined className="lg:hidden" />,
+                },
               ]}
               className="!bg-slate-100 !p-1 !rounded-2xl !border !border-slate-200 !font-bold text-slate-700"
             />
           </div>
 
           {activeTab === 'menu' && (
-            <div className="flex-1 max-w-md">
+            <div className="flex-1 min-w-[200px] max-w-md">
               <Input
-                placeholder="Search dishes by name or ingredients..."
+                placeholder="Search dishes..."
                 prefix={<SearchOutlined className="text-slate-400 mr-1.5" />}
                 allowClear
                 size="large"
@@ -512,11 +542,21 @@ export default function POSTerminalPage() {
       </div>
 
       {/* RIGHT PANEL: Cart & Fast Checkout (White surface + High Contrast) */}
-      <div className="w-full lg:w-[420px] bg-white flex flex-col h-full overflow-hidden shadow-xl border-l border-slate-200">
+      <div className={`w-full lg:w-[420px] bg-white flex-col h-full overflow-hidden shadow-xl border-l border-slate-200 ${
+        activeTab === 'cart' ? 'flex' : 'hidden lg:flex'
+      }`}>
         {/* Cart Header */}
         <div className="p-4 border-b border-slate-200 bg-slate-50/80 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
+              <Button
+                type="text"
+                size="small"
+                onClick={() => setActiveTab('menu')}
+                className="lg:hidden !text-xs !font-bold !text-slate-600 !px-2 !rounded-lg !bg-slate-200"
+              >
+                &larr; Menu
+              </Button>
               <ShoppingCartOutlined className="text-xl text-orange-600" />
               <span className="font-black text-base text-slate-900">Order Ticket</span>
               {cart.tableNumber && (
@@ -552,10 +592,10 @@ export default function POSTerminalPage() {
                 variant="borderless"
                 value={selectedWaiter.id}
                 onChange={(val) => {
-                  const found = WAITERS.find((w) => w.id === val);
-                  if (found) setSelectedWaiter(found);
+                  const found = activeStaff.find((w) => w.id === val);
+                  if (found) setSelectedWaiter({ id: found.id, name: found.name });
                 }}
-                options={WAITERS.map((w) => ({
+                options={activeStaff.map((w) => ({
                   value: w.id,
                   label: `${w.name} (${w.id})`,
                 }))}
@@ -853,6 +893,27 @@ export default function POSTerminalPage() {
         changeDue={paymentMethod === 'cash' ? Math.max(0, cashTendered - grandTotal) : 0}
         paymentMethod={paymentMethod}
       />
+
+      {/* Floating Bottom Cart Bar (Mobile Only) */}
+      {activeTab !== 'cart' && cart.items.length > 0 && (
+        <div className="lg:hidden fixed bottom-4 left-4 right-4 z-40">
+          <Button
+            type="primary"
+            block
+            size="large"
+            onClick={() => setActiveTab('cart')}
+            className="!h-13 !rounded-2xl !bg-gradient-to-r !from-orange-500 !to-amber-500 hover:!from-orange-600 !font-black !text-sm !shadow-2xl flex items-center justify-between px-5 border-0 text-white"
+          >
+            <span className="flex items-center gap-2">
+              <ShoppingCartOutlined className="text-lg" />
+              <span>View Cart ({totalCartQty})</span>
+            </span>
+            <span className="bg-white/25 px-3 py-1 rounded-xl font-mono text-sm">
+              ${grandTotal.toFixed(2)} &rarr;
+            </span>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

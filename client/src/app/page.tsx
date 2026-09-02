@@ -27,13 +27,20 @@ export default function HomePage() {
     queryFn: () => api.getAnalytics(),
   });
 
-  const { data: tables } = useQuery({
+  const { data: hotel } = useQuery({
+    queryKey: ['hotel'],
+    queryFn: () => api.getHotel(),
+  });
+
+  const { data: tables = [] } = useQuery({
     queryKey: ['tables'],
     queryFn: () => api.getTables(),
   });
 
   const activeTablesCount = tables?.filter((t) => t.status === 'occupied').length || 0;
   const totalTables = tables?.length || 8;
+  const primaryQrToken = tables?.[0]?.qrCodeToken || 'gh-tbl-01';
+  const hotelSlug = hotel?.slug || 'pos-project';
 
   const modules = [
     {
@@ -50,7 +57,7 @@ export default function HomePage() {
     {
       title: 'QR Code Guest Menu',
       description: 'Mobile-first contactless ordering with 3D table food preview, lighting ambiance switches, and instant kitchen routing.',
-      href: '/menu/pos-project/gh-tbl-01',
+      href: `/menu/${hotelSlug}/${primaryQrToken}`,
       icon: <QrcodeOutlined className="text-2xl text-white" />,
       tag: 'Contactless Guest',
       stats: 'Zero App Install',

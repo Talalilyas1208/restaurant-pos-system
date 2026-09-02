@@ -150,7 +150,7 @@ export default function KitchenDisplayPage() {
   };
 
   return (
-    <div className="flex-1 bg-slate-100 text-slate-900 flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="flex-1 bg-slate-100 text-slate-900 flex flex-col h-full overflow-hidden">
       {/* KDS Header (Clean White & High Contrast) */}
       <div className="p-4 bg-white border-b border-slate-200 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
@@ -203,8 +203,7 @@ export default function KitchenDisplayPage() {
       </div>
 
       {/* Kanban Ticket Columns (White surface + Vibrant RGB Accents) */}
-      <div className="flex-1 p-4 grid grid-cols-1 md:grid-cols-3 gap-4 overflow-hidden">
-        {/* COLUMN 1: PENDING / NEW (Solar Amber / Orange RGB Theme) */}
+      <div className="flex-1 p-3 md:p-4 grid grid-cols-1 md:grid-cols-3 gap-4 overflow-y-auto md:overflow-hidden">
         <div className="flex flex-col bg-amber-50/70 rounded-3xl border-2 border-amber-200 overflow-hidden shadow-sm">
           <div className="p-3.5 bg-amber-100/90 border-b border-amber-200 flex items-center justify-between">
             <span className="font-black text-sm text-amber-900 flex items-center gap-2">
