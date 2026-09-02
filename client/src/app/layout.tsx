@@ -2,7 +2,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { Providers } from '../store/Providers';
-import Navbar from '../components/Navbar';
+import Sidebar from '../components/Sidebar';
 import '../styles/globals.css';
 
 export const metadata: Metadata = {
@@ -17,11 +17,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-slate-50 text-slate-900 min-h-screen flex flex-col font-sans antialiased selection:bg-orange-500 selection:text-white">
+      <body className="bg-slate-50 text-slate-900 font-sans antialiased selection:bg-orange-500 selection:text-white overflow-hidden">
         <AntdRegistry>
           <Providers>
-            <Navbar />
-            <main className="flex-1 flex flex-col">{children}</main>
+            <div className="flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-slate-50 text-slate-900">
+              <Sidebar />
+              <main className="flex-1 flex flex-col h-full overflow-y-auto min-w-0">{children}</main>
+            </div>
           </Providers>
         </AntdRegistry>
       </body>
