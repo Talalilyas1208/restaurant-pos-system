@@ -139,6 +139,17 @@ export interface Payment {
   createdAt: string;
 }
 
+export interface StaffUser {
+  id: string;
+  hotelId: string;
+  name: string;
+  email?: string;
+  role: 'admin' | 'manager' | 'cashier' | 'waiter' | 'kitchen';
+  pinCode: string;
+  isActive: boolean;
+  createdAt?: string;
+}
+
 export interface AnalyticsSummary {
   todayRevenue: number;
   totalOrdersToday: number;
@@ -147,3 +158,4 @@ export interface AnalyticsSummary {
   popularItems: { name: string; quantity: number; revenue: number }[];
   hourlySales: { hour: string; sales: number }[];
 }
+

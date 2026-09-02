@@ -8,14 +8,12 @@ import {
   AnalyticsSummary,
   TableStatus,
   OrderStatus,
+  StaffUser,
 } from '../types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api/v1';
 
 // ─── Core Fetcher ─────────────────────────────────────────────────────────────
-// The `signal` parameter is provided automatically by React Query when a query
-// is cancelled (e.g. component unmounts, query key changes). This prevents
-// responses from in-flight stale requests from being processed.
 async function fetcher<T>(
   url: string,
   options?: RequestInit & { signal?: AbortSignal },
@@ -36,13 +34,10 @@ async function fetcher<T>(
 }
 
 // ─── API Methods ──────────────────────────────────────────────────────────────
-// Each queryFn receives a `{ signal }` from React Query — pass it through
-// to fetcher so in-flight requests can be aborted on unmount or key change.
-
 export const api = {
-  // ── Hotel ──────────────────────────────────────────────────────────────────
-  getHotel: (slug = 'grand-horizon', signal?: AbortSignal) =>
-    fetcher<Hotel>(`/hotels/${slug}`, { signal }),
+  // ── Hotel / Brand Profile ──────────────────────────────────────────────────
+  getHotel: (slug = 'pos-project', signal?: AbortSignal) =>
+    fetcher<Hotel>(slug ? `/hotels/${slug}` : '/hotels', { signal }),
 
   updateHotel: (data: Partial<Hotel>) =>
     fetcher<Hotel>('/hotels', { method: 'PUT', body: JSON.stringify(data) }),
@@ -63,6 +58,9 @@ export const api = {
   createTable: (table: Omit<DiningTable, 'id' | 'createdAt'>) =>
     fetcher<DiningTable>('/tables', { method: 'POST', body: JSON.stringify(table) }),
 
+  deleteTable: (id: string) =>
+    fetcher<{ success: boolean }>(`/tables/${id}`, { method: 'DELETE' }),
+
   // ── Categories & Menu ──────────────────────────────────────────────────────
   getCategories: (signal?: AbortSignal) =>
     fetcher<Category[]>('/menu/categories', { signal }),
@@ -81,6 +79,19 @@ export const api = {
 
   updateMenuItem: (id: string, updates: Partial<MenuItem>) =>
     fetcher<MenuItem>(`/menu/items/${id}`, { method: 'PATCH', body: JSON.stringify(updates) }),
+
+  deleteMenuItem: (id: string) =>
+    fetcher<{ success: boolean }>(`/menu/items/${id}`, { method: 'DELETE' }),
+
+  // ── Staff Users / Waiters ──────────────────────────────────────────────────
+  getStaff: (signal?: AbortSignal) =>
+    fetcher<StaffUser[]>('/staff', { signal }),
+
+  createStaff: (staff: Omit<StaffUser, 'id' | 'createdAt'>) =>
+    fetcher<StaffUser>('/staff', { method: 'POST', body: JSON.stringify(staff) }),
+
+  deleteStaff: (id: string) =>
+    fetcher<{ success: boolean }>(`/staff/${id}`, { method: 'DELETE' }),
 
   // ── Orders ─────────────────────────────────────────────────────────────────
   getOrders: (status?: string, signal?: AbortSignal) =>
@@ -106,4 +117,3 @@ export const api = {
   getAnalytics: (signal?: AbortSignal) =>
     fetcher<AnalyticsSummary>('/analytics/dashboard', { signal }),
 };
-

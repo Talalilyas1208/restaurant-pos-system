@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Card, Badge, Button, Tag, Space, Typography } from 'antd';
-import { PrinterOutlined, EyeOutlined, WifiOutlined, CheckCircleFilled } from '@ant-design/icons';
+import { Card, Badge, Button, Tag, Space, Typography, Popconfirm } from 'antd';
+import { PrinterOutlined, EyeOutlined, WifiOutlined, DeleteOutlined } from '@ant-design/icons';
 import { QRCodeSVG } from 'qrcode.react';
 import { Utensils } from 'lucide-react';
 import { DiningTable, Hotel } from '../types';
@@ -13,9 +13,15 @@ interface QRStandCardProps {
   table: DiningTable;
   hotel: Hotel;
   originUrl?: string;
+  onDelete?: (id: string) => void;
 }
 
-export default function QRStandCard({ table, hotel, originUrl = 'http://localhost:3002' }: QRStandCardProps) {
+export default function QRStandCard({
+  table,
+  hotel,
+  originUrl = 'http://localhost:3002',
+  onDelete,
+}: QRStandCardProps) {
   const menuUrl = `${originUrl}/menu/${hotel.slug}/${table.qrCodeToken}`;
 
   const handlePrintCard = () => {
@@ -113,8 +119,24 @@ export default function QRStandCard({ table, hotel, originUrl = 'http://localhos
               onClick={handlePrintCard}
               className="!text-xs !h-9 !rounded-xl !bg-gradient-to-r !from-orange-500 !to-amber-500 hover:!from-orange-600 !font-bold border-0 text-white"
             >
-              Print Stand
+              Print
             </Button>
+            {onDelete && (
+              <Popconfirm
+                title="Delete table?"
+                description="Are you sure you want to delete this table?"
+                onConfirm={() => onDelete(table.id)}
+                okText="Delete"
+                cancelText="Cancel"
+                okButtonProps={{ danger: true }}
+              >
+                <Button
+                  danger
+                  icon={<DeleteOutlined />}
+                  className="!text-xs !h-9 !rounded-xl !border-rose-200 !bg-rose-50 font-bold"
+                />
+              </Popconfirm>
+            )}
           </div>
         </div>
       </Card>
