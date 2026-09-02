@@ -160,3 +160,38 @@ CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_menu_items_hotel_category ON menu_items(hotel_id, category_id);
 CREATE INDEX IF NOT EXISTS idx_dining_tables_token ON dining_tables(qr_code_token);
+
+-- ==========================================================
+-- ROW LEVEL SECURITY (RLS) POLICIES
+-- ==========================================================
+ALTER TABLE hotels ENABLE ROW LEVEL SECURITY;
+ALTER TABLE dining_tables ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE menu_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE item_modifiers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE staff_users ENABLE ROW LEVEL SECURITY;
+
+-- 1. Public Read Access for Menu & Tables (QR Guest Access)
+CREATE POLICY "Allow public read access to hotels" ON hotels FOR SELECT USING (true);
+CREATE POLICY "Allow public read access to categories" ON categories FOR SELECT USING (is_active = true);
+CREATE POLICY "Allow public read access to menu items" ON menu_items FOR SELECT USING (is_available = true);
+CREATE POLICY "Allow public read access to item modifiers" ON item_modifiers FOR SELECT USING (true);
+CREATE POLICY "Allow public read access to dining tables" ON dining_tables FOR SELECT USING (true);
+
+-- 2. Orders & Order Items Access (Allow guests and POS to create & read orders)
+CREATE POLICY "Allow public insert to orders" ON orders FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public select orders" ON orders FOR SELECT USING (true);
+CREATE POLICY "Allow public update orders" ON orders FOR UPDATE USING (true);
+
+CREATE POLICY "Allow public insert to order items" ON order_items FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public select order items" ON order_items FOR SELECT USING (true);
+
+-- 3. Payments Access (Allow processing payments)
+CREATE POLICY "Allow public insert payments" ON payments FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public select payments" ON payments FOR SELECT USING (true);
+
+-- 4. Staff Users Access (Restricted)
+CREATE POLICY "Allow staff reading" ON staff_users FOR SELECT USING (is_active = true);

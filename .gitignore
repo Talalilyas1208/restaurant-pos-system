@@ -3,18 +3,46 @@ node_modules/
 .pnp
 .pnp.js
 
-# Next.js build
+# Next.js & Build Outputs
 .next/
 out/
 build/
 dist/
 
-# Environment Variables — never commit real secrets
+# ==============================================================================
+# SECRETS & ENVIRONMENT VARIABLES (NEVER COMMIT)
+# ==============================================================================
+.env
+.env.*
+*.env
+*.env.*
 **/.env
 **/.env.*
 !**/.env.example
 
-# Logs
+# Private Keys, Certificates & Tokens
+*.pem
+*.key
+*.crt
+*.cert
+*.p12
+*.pfx
+*.pkcs12
+*.jks
+*.keystore
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+
+# Service Account Credentials & Auth JSONs
+*service-account*.json
+*credentials*.json
+*secret*.json
+google-services.json
+GoogleService-Info.plist
+
+# Logs & Diagnostic Outputs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -22,11 +50,15 @@ yarn-error.log*
 logs/
 *.log
 
-# OS Metadata
+# OS & Editor Metadata
 .DS_Store
-*.pem
 Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
 
-# TypeScript
+# TypeScript & Runtime Caches
 *.tsbuildinfo
 next-env.d.ts
+.turbo/
