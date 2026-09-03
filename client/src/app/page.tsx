@@ -2,24 +2,19 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Card, Tag, Button, Typography, Row, Col } from 'antd';
+import { Card, Tag, Row, Col } from 'antd';
 import {
   ShoppingOutlined,
   QrcodeOutlined,
   FireOutlined,
   SettingOutlined,
   ArrowRightOutlined,
-  DollarOutlined,
-  ThunderboltOutlined,
-  CheckCircleOutlined,
   ShopOutlined,
-  RiseOutlined,
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
-import { Sparkles, UtensilsCrossed, ChefHat, BarChart3, QrCode } from 'lucide-react';
-
-const { Title, Paragraph, Text } = Typography;
+import { Sparkles } from 'lucide-react';
+import { MetricCard } from '../components/ui';
 
 export default function HomePage() {
   const { data: analytics } = useQuery({
@@ -90,9 +85,9 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="flex-1 bg-slate-50 text-slate-900 p-6 md:p-10 space-y-8 max-w-7xl mx-auto w-full">
+    <div className="flex-1 bg-slate-50 text-slate-900 p-4 md:p-8 lg:p-10 space-y-8 max-w-7xl mx-auto w-full">
       {/* Hero Banner (White surface with subtle RGB ambient gradients) */}
-      <div className="relative overflow-hidden rounded-3xl bg-white border border-slate-200/90 p-8 md:p-10 shadow-sm">
+      <div className="relative overflow-hidden rounded-3xl bg-white border border-slate-200/90 p-6 md:p-10 shadow-sm">
         <div className="absolute top-0 right-0 -mt-10 -mr-10 w-96 h-96 bg-gradient-to-br from-orange-400/10 via-rose-400/10 to-indigo-400/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 space-y-4 max-w-3xl">
@@ -100,46 +95,35 @@ export default function HomePage() {
             <Sparkles className="w-3.5 h-3.5 inline mr-1 text-orange-500" /> Complete Restaurant POS & Digital QR Dining System
           </Tag>
 
-          <h1 className="text-3xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">
             Next-Gen Restaurant Operating Platform
           </h1>
-          <p className="text-slate-600 text-sm md:text-base leading-relaxed">
+          <p className="text-slate-600 text-xs sm:text-sm md:text-base leading-relaxed">
             High-speed POS, real-time Kitchen Display (KDS), and contactless QR table ordering with porcelain plate preview and waiter assignment.
           </p>
 
           {/* Quick RGB Metrics Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
-            {/* Metric 1: Green */}
-            <div className="bg-emerald-50/70 p-4 rounded-2xl border border-emerald-200/80 shadow-sm">
-              <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">Today Sales</span>
-              <div className="text-2xl font-black text-emerald-700 pt-1">
-                ${analytics?.todayRevenue ? analytics.todayRevenue.toFixed(2) : '1,548.50'}
-              </div>
-            </div>
-
-            {/* Metric 2: Orange */}
-            <div className="bg-orange-50/70 p-4 rounded-2xl border border-orange-200/80 shadow-sm">
-              <span className="text-[11px] font-bold text-orange-800 uppercase tracking-wider block">Active Orders</span>
-              <div className="text-2xl font-black text-orange-600 pt-1">
-                {analytics?.activeOrders || 3} Orders
-              </div>
-            </div>
-
-            {/* Metric 3: Blue */}
-            <div className="bg-blue-50/70 p-4 rounded-2xl border border-blue-200/80 shadow-sm">
-              <span className="text-[11px] font-bold text-blue-800 uppercase tracking-wider block">Floor Occupancy</span>
-              <div className="text-2xl font-black text-blue-700 pt-1">
-                {activeTablesCount} / {totalTables} Tables
-              </div>
-            </div>
-
-            {/* Metric 4: Purple */}
-            <div className="bg-purple-50/70 p-4 rounded-2xl border border-purple-200/80 shadow-sm">
-              <span className="text-[11px] font-bold text-purple-800 uppercase tracking-wider block">Avg. Ticket</span>
-              <div className="text-2xl font-black text-purple-700 pt-1">
-                ${analytics?.averageOrderValue ? analytics.averageOrderValue.toFixed(2) : '42.80'}
-              </div>
-            </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 pt-4 border-t border-slate-100">
+            <MetricCard
+              title="Today Sales"
+              value={`$${analytics?.todayRevenue ? analytics.todayRevenue.toFixed(2) : '1,548.50'}`}
+              color="emerald"
+            />
+            <MetricCard
+              title="Active Orders"
+              value={`${analytics?.activeOrders || 3} Orders`}
+              color="orange"
+            />
+            <MetricCard
+              title="Floor Occupancy"
+              value={`${activeTablesCount} / ${totalTables} Tables`}
+              color="blue"
+            />
+            <MetricCard
+              title="Avg. Ticket"
+              value={`$${analytics?.averageOrderValue ? analytics.averageOrderValue.toFixed(2) : '42.80'}`}
+              color="purple"
+            />
           </div>
         </div>
       </div>

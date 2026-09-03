@@ -39,6 +39,7 @@ import {
 import { api } from '../../lib/api';
 import { DiningTable, MenuItem, Category, StaffUser, Hotel } from '../../types';
 import QRStandCard from '../../components/QRStandCard';
+import { MetricCard, StatusBadge, EmptyState } from '../../components/ui';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -394,45 +395,40 @@ export default function AdminPage() {
         <div className="space-y-6">
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={12} lg={6}>
-              <div className="bg-emerald-50 border border-emerald-200 p-5 rounded-3xl shadow-sm space-y-1">
-                <span className="text-xs text-emerald-800 font-bold uppercase tracking-wider block">Today Revenue</span>
-                <div className="text-3xl font-black text-emerald-700">
-                  ${analytics?.todayRevenue ? analytics.todayRevenue.toFixed(2) : '1,548.50'}
-                </div>
-                <div className="text-[11px] text-emerald-700 font-bold flex items-center gap-1 pt-1">
-                  <RiseOutlined /> +14.2% vs yesterday
-                </div>
-              </div>
+              <MetricCard
+                title="Today Revenue"
+                value={`$${analytics?.todayRevenue ? analytics.todayRevenue.toFixed(2) : '1,548.50'}`}
+                subtitle="Dine-in & Bar"
+                color="emerald"
+                trend={{ value: '+14.2% vs yesterday', isPositive: true }}
+              />
             </Col>
 
             <Col xs={24} sm={12} lg={6}>
-              <div className="bg-orange-50 border border-orange-200 p-5 rounded-3xl shadow-sm space-y-1">
-                <span className="text-xs text-orange-800 font-bold uppercase tracking-wider block">Total Orders</span>
-                <div className="text-3xl font-black text-orange-600">
-                  {analytics?.totalOrdersToday || 34} Orders
-                </div>
-                <div className="text-[11px] text-orange-700 font-semibold pt-1">Dine-in & Room Service</div>
-              </div>
+              <MetricCard
+                title="Total Orders"
+                value={`${analytics?.totalOrdersToday || 34} Orders`}
+                subtitle="Dine-in & Room Service"
+                color="orange"
+              />
             </Col>
 
             <Col xs={24} sm={12} lg={6}>
-              <div className="bg-blue-50 border border-blue-200 p-5 rounded-3xl shadow-sm space-y-1">
-                <span className="text-xs text-blue-800 font-bold uppercase tracking-wider block">Occupied Tables</span>
-                <div className="text-3xl font-black text-blue-700">
-                  {tables.filter((t) => t.status === 'occupied').length} / {tables.length}
-                </div>
-                <div className="text-[11px] text-blue-700 font-semibold pt-1">Real-time floor state</div>
-              </div>
+              <MetricCard
+                title="Occupied Tables"
+                value={`${tables.filter((t) => t.status === 'occupied').length} / ${tables.length}`}
+                subtitle="Real-time floor state"
+                color="blue"
+              />
             </Col>
 
             <Col xs={24} sm={12} lg={6}>
-              <div className="bg-purple-50 border border-purple-200 p-5 rounded-3xl shadow-sm space-y-1">
-                <span className="text-xs text-purple-800 font-bold uppercase tracking-wider block">Avg. Order Value</span>
-                <div className="text-3xl font-black text-purple-700">
-                  ${analytics?.averageOrderValue ? analytics.averageOrderValue.toFixed(2) : '42.80'}
-                </div>
-                <div className="text-[11px] text-purple-700 font-semibold pt-1">Per guest checkout</div>
-              </div>
+              <MetricCard
+                title="Avg. Order Value"
+                value={`$${analytics?.averageOrderValue ? analytics.averageOrderValue.toFixed(2) : '42.80'}`}
+                subtitle="Per guest checkout"
+                color="purple"
+              />
             </Col>
           </Row>
 

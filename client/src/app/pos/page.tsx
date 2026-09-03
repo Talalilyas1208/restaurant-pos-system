@@ -60,6 +60,7 @@ import { MenuItem, DiningTable, SelectedModifier, Order, StaffUser } from '../..
 import ItemModifierModal from '../../components/ItemModifierModal';
 import SplitBillModal from '../../components/SplitBillModal';
 import ReceiptModal from '../../components/ReceiptModal';
+import { MenuItemCard, DiningTableCard, StatusBadge, EmptyState } from '../../components/ui';
 
 const { Text, Title } = Typography;
 
@@ -412,131 +413,64 @@ export default function POSTerminalPage() {
             </div>
 
             {/* Menu Items Grid */}
-            <div className="flex-1 p-4 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredItems.map((item) => {
-                const hasModifiers = item.modifiers && item.modifiers.length > 0;
+            <div className="flex-1 p-4 overflow-y-auto">
+              {filteredItems.length === 0 ? (
+                <EmptyState
+                  title="No dishes found"
+                  description="Try adjusting your category filter or search query."
+                />
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {filteredItems.map((item) => {
+                    const inCartCount = cart.items
+                      .filter((i) => i.menuItemId === item.id)
+                      .reduce((sum, i) => sum + i.quantity, 0);
 
-                const cardContent = (
-                  <Card
-                    hoverable
-                    onClick={() => handleItemClick(item)}
-                    className="!bg-white hover:!bg-slate-50/80 !border-slate-200/90 hover:!border-orange-400 !rounded-3xl transition-all shadow-sm hover:shadow-md h-full flex flex-col justify-between select-none overflow-hidden"
-                    styles={{ body: { padding: '12px', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' } }}
-                  >
-                    {/* Item Image */}
-                    <div>
-                      <div className="relative h-28 w-full rounded-2xl overflow-hidden mb-2.5 bg-slate-100 border border-slate-100 flex items-center justify-center">
-                        {item.imageUrl ? (
-                          <img
-                            src={item.imageUrl}
-                            alt={item.name}
-                            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                            onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
-                        ) : null}
-                        <div className="absolute inset-0 flex items-center justify-center text-slate-400 -z-0">
-                          <Utensils className="w-8 h-8 opacity-30" />
-                        </div>
-
-                        {/* Top Tag Pills */}
-                        <div className="absolute top-1.5 left-1.5 flex flex-wrap gap-1">
-                          {item.isChefSpecial && <Tag color="gold" className="!m-0 !text-[10px] !font-black !rounded-md">Special</Tag>}
-                          {item.isSpicy && <Tag color="error" className="!m-0 !text-[10px] !font-bold !rounded-md">Spicy</Tag>}
-                          {item.isVeg && <Tag color="success" className="!m-0 !text-[10px] !font-bold !rounded-md">Veg</Tag>}
-                        </div>
-
-                        {hasModifiers && (
-                          <div className="absolute bottom-1.5 right-1.5 bg-slate-900/80 backdrop-blur text-[10px] px-2 py-0.5 rounded-md text-amber-300 font-bold">
-                            Options
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Info */}
-                      <div className="space-y-1">
-                        <h4 className="font-black text-sm text-slate-900 line-clamp-1">
-                          {item.name}
-                        </h4>
-                        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
-                          {item.description || 'Gourmet freshly made dish.'}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Price & Add */}
-                    <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
-                      <span className="font-black text-base text-slate-900">
-                        ${item.price.toFixed(2)}
-                      </span>
-                      <Button
-                        type="primary"
-                        shape="circle"
-                        size="small"
-                        icon={<PlusOutlined />}
-                        className="!bg-gradient-to-r !from-orange-500 !to-amber-500 hover:!from-orange-600 !shadow-sm border-0"
+                    return (
+                      <MenuItemCard
+                        key={item.id}
+                        item={item}
+                        onSelect={handleItemClick}
+                        inCartQuantity={inCartCount}
                       />
-                    </div>
-                  </Card>
-                );
-
-                return (
-                  <div key={item.id}>
-                    {item.isChefSpecial ? (
-                      <Badge.Ribbon text="Chef Pick" color="#f59e0b" className="!font-black !text-[10px] !rounded-bl-xl">
-                        {cardContent}
-                      </Badge.Ribbon>
-                    ) : (
-                      cardContent
-                    )}
-                  </div>
-                );
-              })}
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         ) : (
           /* Floor Tables Grid */
-          <div className="flex-1 p-6 overflow-y-auto space-y-6">
+          <div className="flex-1 p-4 md:p-6 overflow-y-auto space-y-5">
             <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
               <div>
-                <h3 className="font-black text-lg text-slate-900">Dining Tables & Hotel Rooms</h3>
-                <p className="text-xs font-semibold text-slate-500">Click a table to link current order ticket</p>
+                <h3 className="font-black text-base text-slate-900">Dining Tables & Rooms</h3>
+                <p className="text-xs font-semibold text-slate-500">Select a table to assign to current ticket</p>
               </div>
               <Space>
-                <Tag color="success" className="!font-bold !rounded-md">Available</Tag>
-                <Tag color="warning" className="!font-bold !rounded-md">Occupied</Tag>
-                <Tag color="processing" className="!font-bold !rounded-md">Billed</Tag>
+                <StatusBadge status="available" size="small" />
+                <StatusBadge status="occupied" size="small" />
+                <StatusBadge status="reserved" size="small" />
               </Space>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {tables.map((tbl) => {
-                const isSelected = cart.tableId === tbl.id;
-                const statusColor =
-                  tbl.status === 'available'
-                    ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
-                    : tbl.status === 'occupied'
-                    ? 'border-amber-300 bg-amber-50 text-amber-800'
-                    : 'border-blue-300 bg-blue-50 text-blue-800';
-
-                return (
-                  <div
+            {tables.length === 0 ? (
+              <EmptyState
+                title="No dining tables"
+                description="Go to Admin & Tables to create tables."
+              />
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {tables.map((tbl) => (
+                  <DiningTableCard
                     key={tbl.id}
-                    onClick={() => handleSelectTable(tbl)}
-                    className={`p-5 rounded-3xl border-2 flex flex-col items-center text-center space-y-2 cursor-pointer transition-all hover:scale-105 shadow-sm ${statusColor} ${
-                      isSelected ? 'ring-4 ring-orange-500 shadow-lg scale-105' : ''
-                    }`}
-                  >
-                    <div className="text-2xl font-black">{tbl.tableNumber}</div>
-                    <span className="text-xs font-semibold opacity-80">{tbl.section}</span>
-                    <Tag color={tbl.status === 'available' ? 'success' : tbl.status === 'occupied' ? 'warning' : 'processing'} className="!rounded-md !font-bold">
-                      {tbl.capacity} Seats &bull; {tbl.status}
-                    </Tag>
-                  </div>
-                );
-              })}
-            </div>
+                    table={tbl}
+                    isSelected={cart.tableId === tbl.id}
+                    onSelect={handleSelectTable}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
