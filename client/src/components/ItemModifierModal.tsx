@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Modal, Radio, Checkbox, Input, InputNumber, Button, Tag, Space, Typography, Divider } from 'antd';
-import { PlusOutlined, MinusOutlined, ShoppingCartOutlined, FireOutlined } from '@ant-design/icons';
+import { Modal, Input, Button, Tag, Typography, Divider } from 'antd';
+import { PlusOutlined, MinusOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { MenuItem, SelectedModifier } from '../types';
+import ModifierGroupItem from './menu/ModifierGroupItem';
 
-const { Text, Paragraph } = Typography;
+const { Paragraph } = Typography;
 const { TextArea } = Input;
 
 interface ItemModifierModalProps {
@@ -51,7 +52,6 @@ export default function ItemModifierModal({ item, isOpen, onClose, onConfirm }: 
       instructions,
     });
     onClose();
-    // Reset state
     setQuantity(1);
     setSelectedModifiers([]);
     setInstructions('');
@@ -77,7 +77,7 @@ export default function ItemModifierModal({ item, isOpen, onClose, onConfirm }: 
       <div className="space-y-4 pt-2 text-slate-900">
         {/* Item Image */}
         {item.imageUrl && (
-          <div className="h-44 w-full rounded-2xl overflow-hidden relative shadow-sm bg-slate-100 border border-slate-200 flex items-center justify-center">
+          <div className="h-44 w-full rounded-2xl overflow-hidden relative shadow-xs bg-slate-100 border border-slate-200 flex items-center justify-center">
             <img
               src={item.imageUrl}
               alt={item.name}
@@ -103,89 +103,18 @@ export default function ItemModifierModal({ item, isOpen, onClose, onConfirm }: 
 
         {/* Modifiers List */}
         {item.modifiers && item.modifiers.length > 0 ? (
-          item.modifiers.map((modGroup) => {
-            const isSingleSelect = modGroup.maxSelection === 1;
-            const currentSelectedInGroup = selectedModifiers.find((m) => m.groupName === modGroup.name);
-
-            return (
-              <div
-                key={modGroup.id}
-                className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2.5"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-black text-sm text-slate-900">
-                    {modGroup.name}{' '}
-                    {modGroup.isRequired ? (
-                      <Tag color="error" className="!text-[10px] !font-bold !rounded-md">Required</Tag>
-                    ) : (
-                      <Tag color="default" className="!text-[10px] !rounded-md">Optional</Tag>
-                    )}
-                  </span>
-                  <span className="text-xs text-slate-500 font-semibold">
-                    {isSingleSelect ? 'Choose 1 option' : `Select up to ${modGroup.maxSelection}`}
-                  </span>
-                </div>
-
-                {isSingleSelect ? (
-                  <Radio.Group
-                    className="w-full space-y-2"
-                    value={currentSelectedInGroup?.optionName}
-                    onChange={(e) => {
-                      const opt = modGroup.options.find((o) => o.name === e.target.value);
-                      if (opt) handleSingleSelect(modGroup.name, opt.name, opt.price);
-                    }}
-                  >
-                    <Space direction="vertical" className="w-full">
-                      {modGroup.options.map((opt) => (
-                        <div
-                          key={opt.name}
-                          className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-slate-200 hover:border-orange-400 cursor-pointer shadow-sm"
-                          onClick={() => handleSingleSelect(modGroup.name, opt.name, opt.price)}
-                        >
-                          <Radio value={opt.name} className="!text-slate-800 !text-sm font-bold">
-                            {opt.name}
-                          </Radio>
-                          <span className="text-xs font-black text-orange-600">
-                            {opt.price > 0 ? `+$${opt.price.toFixed(2)}` : 'Included'}
-                          </span>
-                        </div>
-                      ))}
-                    </Space>
-                  </Radio.Group>
-                ) : (
-                  <Space direction="vertical" className="w-full">
-                    {modGroup.options.map((opt) => {
-                      const isChecked = selectedModifiers.some(
-                        (m) => m.groupName === modGroup.name && m.optionName === opt.name
-                      );
-                      return (
-                        <div
-                          key={opt.name}
-                          className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-slate-200 hover:border-orange-400 shadow-sm"
-                        >
-                          <Checkbox
-                            checked={isChecked}
-                            onChange={(e) =>
-                              handleMultiSelect(modGroup.name, opt.name, opt.price, e.target.checked)
-                            }
-                            className="!text-slate-800 !text-sm font-bold"
-                          >
-                            {opt.name}
-                          </Checkbox>
-                          <span className="text-xs font-black text-orange-600">
-                            {opt.price > 0 ? `+$${opt.price.toFixed(2)}` : 'Included'}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </Space>
-                )}
-              </div>
-            );
-          })
+          item.modifiers.map((modGroup) => (
+            <ModifierGroupItem
+              key={modGroup.id}
+              modGroup={modGroup}
+              selectedModifiers={selectedModifiers}
+              onSingleSelect={handleSingleSelect}
+              onMultiSelect={handleMultiSelect}
+            />
+          ))
         ) : null}
 
-        {/* Special Kitchen Instructions */}
+        {/* Special Instructions */}
         <div className="space-y-1">
           <label className="text-xs font-bold text-slate-700 block">Special Instructions</label>
           <TextArea
@@ -199,9 +128,8 @@ export default function ItemModifierModal({ item, isOpen, onClose, onConfirm }: 
 
         <Divider className="!border-slate-200 !my-3" />
 
-        {/* Bottom Total & Add CTA */}
+        {/* Bottom CTA */}
         <div className="flex items-center justify-between pt-1">
-          {/* Quantity Controls */}
           <div className="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200">
             <Button
               size="small"
@@ -220,7 +148,6 @@ export default function ItemModifierModal({ item, isOpen, onClose, onConfirm }: 
             />
           </div>
 
-          {/* Confirm Button */}
           <Button
             type="primary"
             size="large"
