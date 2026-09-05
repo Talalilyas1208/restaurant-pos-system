@@ -126,7 +126,7 @@ export interface Order {
   updatedAt: string;
 }
 
-export type PaymentMethod = 'cash' | 'credit_card' | 'debit_card' | 'room_charge' | 'qr_upi' | 'bank_transfer' | 'apple_pay';
+export type PaymentMethod = 'cash' | 'credit_card' | 'debit_card' | 'room_charge' | 'qr_upi' | 'bank_transfer' | 'easypaisa' | 'jazzcash' | 'apple_pay';
 
 export interface Payment {
   id: string;
@@ -146,6 +146,7 @@ export interface Payment {
   authCode?: string;
   bankName?: string;
   senderAccount?: string;
+  senderMobile?: string;
   createdAt: string;
 }
 

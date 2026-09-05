@@ -158,7 +158,7 @@ export default function KDSTicketCard({
             icon={<ThunderboltOutlined />}
             loading={isUpdating}
             onClick={() => onUpdateStatus(order.id, 'completed')}
-            className="!h-10 !rounded-xl !bg-gradient-to-r !from-slate-800 !to-slate-900 hover:!from-black !font-bold !text-xs border-0 text-white shadow-sm"
+            className="!h-10 !rounded-xl !bg-gradient-to-r !from-indigo-600 !to-violet-600 hover:!from-indigo-700 !font-bold !text-xs border-0 text-white shadow-sm"
           >
             Complete Ticket
           </Button>

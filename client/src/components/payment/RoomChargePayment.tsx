@@ -45,16 +45,16 @@ export default function RoomChargePayment({
 
   return (
     <div className="space-y-3.5">
-      {/* Hotel Folio Bill Header */}
-      <div className="p-4 rounded-2xl bg-gradient-to-tr from-purple-900 via-indigo-900 to-slate-900 text-white shadow-md border border-indigo-700/60">
+      {/* Hotel Folio Bill Header (Light High-Contrast Card) */}
+      <div className="p-4 rounded-2xl bg-gradient-to-tr from-purple-50 via-indigo-50/60 to-slate-50 text-slate-800 shadow-sm border border-purple-200/80">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-purple-300">
+            <div className="w-8 h-8 rounded-xl bg-purple-100 border border-purple-200 flex items-center justify-center text-purple-700">
               <BankOutlined className="text-base" />
             </div>
             <div>
-              <span className="font-bold text-xs text-purple-200 block">Hotel PMS Room Charge</span>
-              <span className="text-[10px] text-slate-400">Post direct to guest stay balance</span>
+              <span className="font-bold text-xs text-purple-900 block">Hotel PMS Room Charge</span>
+              <span className="text-[10px] text-slate-500 font-medium">Post direct to guest stay balance</span>
             </div>
           </div>
           <Tag color="purple" className="!m-0 !text-[11px] !font-bold !rounded-md">
@@ -62,9 +62,9 @@ export default function RoomChargePayment({
           </Tag>
         </div>
 
-        <div className="mt-3 flex items-center justify-between border-t border-indigo-800/80 pt-2.5">
-          <span className="text-xs text-slate-300 font-medium">Charge Amount</span>
-          <span className="text-xl font-black text-amber-400">
+        <div className="mt-3 flex items-center justify-between border-t border-purple-200/60 pt-2.5">
+          <span className="text-xs text-slate-600 font-semibold">Charge Amount</span>
+          <span className="text-xl font-black text-orange-600">
             {currencySymbol}{amount.toFixed(2)}
           </span>
         </div>
