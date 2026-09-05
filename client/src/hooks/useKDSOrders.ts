@@ -96,3 +96,4 @@ export function useKDSOrders() {
     isUpdating: updateStatusMutation.isPending,
   };
 }
+
