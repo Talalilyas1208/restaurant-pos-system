@@ -26,9 +26,12 @@ async function fetcher<T>(
     },
   });
 
-  const json = await res.json();
+  const json = await res.json().catch(() => ({}));
   if (!res.ok || !json.success) {
-    throw new Error(json.message || `API error: ${res.status} ${res.statusText}`);
+    const errorDetails = Array.isArray(json.errors) && json.errors.length > 0
+      ? `: ${json.errors.map((e: any) => `${e.field}: ${e.message}`).join(', ')}`
+      : '';
+    throw new Error((json.message || `API error: ${res.status} ${res.statusText}`) + errorDetails);
   }
   return json.data as T;
 }

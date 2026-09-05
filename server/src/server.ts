@@ -36,12 +36,12 @@ app.use(
       // Allow requests with no origin (like mobile apps, curl, server-to-server)
       if (!origin) return callback(null, true);
 
-      // In development or if wildcard configured, allow localhost & standard web origins
-      if (!allowedOrigins) {
+      // In development or if wildcard configured, allow all origins
+      if (config.nodeEnv === 'development' || !allowedOrigins || allowedOrigins.includes('*')) {
         return callback(null, true);
       }
 
-      if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+      if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
@@ -49,7 +49,7 @@ app.use(
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'Accept'],
     maxAge: 86400, // 24 hours preflight cache
   })
 );

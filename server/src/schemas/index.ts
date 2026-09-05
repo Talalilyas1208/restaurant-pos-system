@@ -1,18 +1,19 @@
 import { z } from 'zod';
 
 export const orderItemModifierSchema = z.object({
-  groupName: z.string().min(1).max(100),
-  optionName: z.string().min(1).max(100),
-  price: z.number().min(0),
+  groupName: z.string().optional().default(''),
+  optionName: z.string().optional().default(''),
+  price: z.number().min(0).optional().default(0),
+  name: z.string().optional(),
 });
 
 export const orderItemSchema = z.object({
   menuItemId: z.string().optional(),
   name: z.string().min(1).max(200),
-  unitPrice: z.number().min(0),
-  quantity: z.number().int().positive(),
-  totalPrice: z.number().min(0),
-  selectedModifiers: z.array(orderItemModifierSchema).optional(),
+  unitPrice: z.number().min(0).optional(),
+  quantity: z.number().int().positive().default(1),
+  totalPrice: z.number().min(0).optional(),
+  selectedModifiers: z.array(z.any()).optional(),
   specialInstructions: z.string().max(500).optional(),
 });
 
@@ -22,15 +23,15 @@ export const createOrderSchema = z.object({
   tableNumber: z.string().optional(),
   orderType: z.enum(['dine_in', 'room_service', 'takeaway', 'delivery']).default('dine_in'),
   source: z.enum(['pos', 'qr_customer', 'kiosk']).default('pos'),
-  customerName: z.string().max(100).default('Guest'),
+  customerName: z.string().max(100).optional().default('Guest'),
   customerPhone: z.string().max(50).optional(),
   customerNotes: z.string().max(500).optional(),
   items: z.array(orderItemSchema).min(1, 'Order must contain at least one item'),
-  subtotal: z.number().min(0),
-  tax: z.number().min(0).default(0),
-  serviceCharge: z.number().min(0).default(0),
-  discountAmount: z.number().min(0).default(0),
-  total: z.number().min(0),
+  subtotal: z.number().min(0).optional(),
+  tax: z.number().min(0).optional().default(0),
+  serviceCharge: z.number().min(0).optional().default(0),
+  discountAmount: z.number().min(0).optional().default(0),
+  total: z.number().min(0).optional(),
   serverStaffId: z.string().optional(),
   serverStaffName: z.string().optional(),
 });
@@ -42,8 +43,8 @@ export const updateOrderStatusSchema = z.object({
 export const processPaymentSchema = z.object({
   orderId: z.string().min(1, 'Order ID is required'),
   hotelId: z.string().optional(),
-  paymentMethod: z.enum(['cash', 'credit_card', 'debit_card', 'room_charge', 'qr_upi', 'apple_pay']),
-  amount: z.number().positive('Payment amount must be greater than 0'),
+  paymentMethod: z.string().default('cash'),
+  amount: z.number().min(0, 'Payment amount must be non-negative'),
   tenderedAmount: z.number().min(0).optional(),
   changeDue: z.number().min(0).optional(),
   transactionRef: z.string().max(100).optional(),

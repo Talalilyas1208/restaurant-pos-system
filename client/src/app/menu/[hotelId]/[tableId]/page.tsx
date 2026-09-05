@@ -206,6 +206,11 @@ export default function CustomerQRMenuPage() {
       customerNotes: tableNotes,
       serverStaffId: 'W-101',
       serverStaffName: 'Marco Rossi',
+      subtotal: cartSubtotal,
+      tax: 0,
+      serviceCharge: 0,
+      discountAmount: 0,
+      total: cartSubtotal,
       items: cartItems.map((ci) => ({
         menuItemId: ci.item.id,
         name: ci.item.name,
