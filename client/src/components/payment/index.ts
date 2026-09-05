@@ -6,3 +6,4 @@ export type { RoomChargeData } from './RoomChargePayment';
 
 export { default as BankTransferQRPayment } from './BankTransferQRPayment';
 export type { BankTransferQRData } from './BankTransferQRPayment';
+
