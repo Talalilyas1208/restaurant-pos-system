@@ -121,7 +121,7 @@ export interface Order {
   updatedAt: string;
 }
 
-export type PaymentMethod = 'cash' | 'credit_card' | 'debit_card' | 'room_charge' | 'qr_upi' | 'apple_pay';
+export type PaymentMethod = 'cash' | 'credit_card' | 'debit_card' | 'room_charge' | 'qr_upi' | 'bank_transfer' | 'apple_pay';
 
 export interface Payment {
   id: string;
@@ -136,6 +136,11 @@ export interface Payment {
   roomNumber?: string;
   guestName?: string;
   processedBy?: string;
+  cardLast4?: string;
+  cardBrand?: string;
+  authCode?: string;
+  bankName?: string;
+  senderAccount?: string;
   createdAt: string;
 }
 

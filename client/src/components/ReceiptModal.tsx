@@ -14,6 +14,11 @@ interface ReceiptModalProps {
   tenderedAmount?: number;
   changeDue?: number;
   paymentMethod?: string;
+  cardBrand?: string;
+  cardLast4?: string;
+  authCode?: string;
+  roomNumber?: string;
+  transferRef?: string;
 }
 
 export default function ReceiptModal({
@@ -24,6 +29,11 @@ export default function ReceiptModal({
   tenderedAmount,
   changeDue,
   paymentMethod = 'Cash',
+  cardBrand,
+  cardLast4,
+  authCode,
+  roomNumber,
+  transferRef,
 }: ReceiptModalProps) {
   if (!isOpen || !order) return null;
 
@@ -163,9 +173,23 @@ export default function ReceiptModal({
                 </span>
               </div>
               <div className="flex justify-between text-gray-700 pt-1">
-                <span>Method:</span>
-                <span className="uppercase font-semibold">{paymentMethod}</span>
+                <span>Payment Method:</span>
+                <span className="uppercase font-semibold text-right">
+                  {paymentMethod === 'credit_card'
+                    ? `${cardBrand || 'Card'}${cardLast4 ? ` •••• ${cardLast4}` : ''}`
+                    : paymentMethod === 'room_charge'
+                    ? `Room Charge${roomNumber ? ` (${roomNumber})` : ''}`
+                    : paymentMethod === 'bank_transfer'
+                    ? `Bank Wire / QR Pay${transferRef ? ` (#${transferRef})` : ''}`
+                    : 'Cash'}
+                </span>
               </div>
+              {authCode && (
+                <div className="flex justify-between text-gray-500 text-[10px]">
+                  <span>Approval Auth Code:</span>
+                  <span className="font-mono">{authCode}</span>
+                </div>
+              )}
               {tenderedAmount !== undefined && (
                 <div className="flex justify-between text-gray-700">
                   <span>Amount Tendered:</span>

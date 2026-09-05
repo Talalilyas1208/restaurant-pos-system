@@ -40,6 +40,7 @@ import {
   UserOutlined,
   WifiOutlined,
   DisconnectOutlined,
+  QrcodeOutlined,
 } from '@ant-design/icons';
 import { Utensils, Sparkles, Flame, Leaf } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store';
@@ -61,6 +62,14 @@ import ItemModifierModal from '../../components/ItemModifierModal';
 import SplitBillModal from '../../components/SplitBillModal';
 import ReceiptModal from '../../components/ReceiptModal';
 import { MenuItemCard, DiningTableCard, StatusBadge, EmptyState } from '../../components/ui';
+import {
+  CardTerminalPayment,
+  CardPaymentData,
+  RoomChargePayment,
+  RoomChargeData,
+  BankTransferQRPayment,
+  BankTransferQRData,
+} from '../../components/payment';
 
 const { Text, Title } = Typography;
 
@@ -115,10 +124,30 @@ export default function POSTerminalPage() {
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
 
   // Payment form state
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'credit_card' | 'room_charge'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'credit_card' | 'room_charge' | 'bank_transfer'>('cash');
   const [cashTendered, setCashTendered] = useState<number>(0);
-  const [roomNumber, setRoomNumber] = useState('');
   const [lastPaidOrder, setLastPaidOrder] = useState<Order | null>(null);
+
+  // Dedicated Payment Method States
+  const [cardData, setCardData] = useState<CardPaymentData>({
+    mode: 'terminal',
+    cardBrand: 'Visa',
+    cardLast4: '4242',
+    authCode: 'AUTH-8921',
+    transactionRef: 'TRX-1001',
+  });
+
+  const [roomData, setRoomData] = useState<RoomChargeData>({
+    roomNumber: 'Room 204',
+    guestName: 'Guest',
+    folioId: 'FOLIO-101',
+    isVerified: true,
+  });
+
+  const [bankQRData, setBankQRData] = useState<BankTransferQRData>({
+    transferRef: 'UTR-9842109',
+    senderName: 'Guest',
+  });
 
   // ── useEffect: Online / Offline detection ────────────────────────────────────
   // Syncs browser connectivity state into Redux so any component can react to it.
@@ -283,7 +312,7 @@ export default function POSTerminalPage() {
       id: `ord-${Date.now()}`,
       hotelId: hotel?.id || '',
       tableId: cart.tableId || undefined,
-      tableNumber: cart.tableNumber || (cart.orderType === 'room_service' ? `Room ${roomNumber}` : 'Takeaway'),
+      tableNumber: cart.tableNumber || (cart.orderType === 'room_service' ? `Room ${roomData.roomNumber}` : 'Takeaway'),
       orderNumber: generatedOrderNumber,
       orderType: cart.orderType,
       source: 'pos',
@@ -347,7 +376,16 @@ export default function POSTerminalPage() {
           amount: grandTotal,
           tenderedAmount: paymentMethod === 'cash' ? cashTendered : grandTotal,
           changeDue: paymentMethod === 'cash' ? Math.max(0, cashTendered - grandTotal) : 0,
-          roomNumber: paymentMethod === 'room_charge' ? roomNumber : undefined,
+          roomNumber: paymentMethod === 'room_charge' ? roomData.roomNumber : undefined,
+          guestName: paymentMethod === 'room_charge' ? roomData.guestName : bankQRData.senderName || undefined,
+          cardBrand: paymentMethod === 'credit_card' ? cardData.cardBrand : undefined,
+          cardLast4: paymentMethod === 'credit_card' ? cardData.cardLast4 : undefined,
+          authCode: paymentMethod === 'credit_card' ? cardData.authCode : undefined,
+          transactionRef: paymentMethod === 'credit_card'
+            ? (cardData.transactionRef || cardData.authCode)
+            : paymentMethod === 'bank_transfer'
+            ? bankQRData.transferRef
+            : undefined,
         },
       };
 
@@ -794,7 +832,7 @@ export default function POSTerminalPage() {
             <span className="text-3xl font-black text-orange-600">${grandTotal.toFixed(2)}</span>
           </div>
 
-          {/* Payment Method */}
+          {/* Payment Method Selector */}
           <Segmented
             block
             size="large"
@@ -802,13 +840,14 @@ export default function POSTerminalPage() {
             onChange={(val) => setPaymentMethod(val as any)}
             options={[
               { label: 'Cash', value: 'cash', icon: <DollarOutlined /> },
-              { label: 'Credit/Debit', value: 'credit_card', icon: <CreditCardOutlined /> },
-              { label: 'Room Bill', value: 'room_charge', icon: <BankOutlined /> },
+              { label: 'Card / Terminal', value: 'credit_card', icon: <CreditCardOutlined /> },
+              { label: 'Room Charge', value: 'room_charge', icon: <BankOutlined /> },
+              { label: 'Bank / QR Pay', value: 'bank_transfer', icon: <QrcodeOutlined /> },
             ]}
             className="!bg-slate-100 !p-1.5 !rounded-2xl !border !border-slate-200 font-bold"
           />
 
-          {/* Cash Input */}
+          {/* Method 1: Cash Tender */}
           {paymentMethod === 'cash' && (
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
               <label className="text-xs text-slate-700 font-bold block">Cash Tendered ($)</label>
@@ -829,18 +868,36 @@ export default function POSTerminalPage() {
             </div>
           )}
 
-          {/* Room Charge Input */}
+          {/* Method 2: Credit Card & POS Terminal Component */}
+          {paymentMethod === 'credit_card' && (
+            <CardTerminalPayment
+              amount={grandTotal}
+              currencySymbol={hotel?.currencySymbol || '$'}
+              value={cardData}
+              onChange={setCardData}
+            />
+          )}
+
+          {/* Method 3: Room Charge / Hotel Folio Component */}
           {paymentMethod === 'room_charge' && (
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
-              <label className="text-xs text-slate-700 font-bold block">Guest Room Number</label>
-              <Input
-                size="large"
-                placeholder="e.g. Room 204"
-                value={roomNumber}
-                onChange={(e) => setRoomNumber(e.target.value)}
-                className="!rounded-xl font-bold"
-              />
-            </div>
+            <RoomChargePayment
+              amount={grandTotal}
+              currencySymbol={hotel?.currencySymbol || '$'}
+              value={roomData}
+              onChange={setRoomData}
+            />
+          )}
+
+          {/* Method 4: Bank Wire Transfer & QR Code Component */}
+          {paymentMethod === 'bank_transfer' && (
+            <BankTransferQRPayment
+              amount={grandTotal}
+              currencySymbol={hotel?.currencySymbol || '$'}
+              hotelName={hotel?.name}
+              orderNumber={`#POS-${Date.now().toString().slice(-4)}`}
+              value={bankQRData}
+              onChange={setBankQRData}
+            />
           )}
 
           <Divider className="!border-slate-200 !my-3" />
@@ -855,7 +912,6 @@ export default function POSTerminalPage() {
               size="large"
               icon={<CheckCircleOutlined />}
               onClick={handleConfirmPayment}
-              loading={processPaymentMutation.isPending}
               className="!h-10 !px-6 !rounded-xl !bg-gradient-to-r !from-emerald-600 !to-teal-600 hover:!from-emerald-700 !font-bold !shadow-md !shadow-emerald-600/25 border-0 text-white"
             >
               Confirm & Settle
@@ -873,6 +929,11 @@ export default function POSTerminalPage() {
         tenderedAmount={paymentMethod === 'cash' ? cashTendered : grandTotal}
         changeDue={paymentMethod === 'cash' ? Math.max(0, cashTendered - grandTotal) : 0}
         paymentMethod={paymentMethod}
+        cardBrand={paymentMethod === 'credit_card' ? cardData.cardBrand : undefined}
+        cardLast4={paymentMethod === 'credit_card' ? cardData.cardLast4 : undefined}
+        authCode={paymentMethod === 'credit_card' ? cardData.authCode : undefined}
+        roomNumber={paymentMethod === 'room_charge' ? roomData.roomNumber : undefined}
+        transferRef={paymentMethod === 'bank_transfer' ? bankQRData.transferRef : undefined}
       />
 
       {/* Floating Bottom Cart Bar (Mobile Only) */}
