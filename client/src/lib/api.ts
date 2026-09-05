@@ -106,6 +106,12 @@ export const api = {
   createOrder: (order: Partial<Order>) =>
     fetcher<Order>('/orders', { method: 'POST', body: JSON.stringify(order) }),
 
+  checkoutOrder: (payload: { order: Partial<Order>; payment: any }) =>
+    fetcher<{ order: Order; payment: Payment }>('/orders/checkout', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
   updateOrderStatus: (id: string, status: OrderStatus) =>
     fetcher<Order>(`/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
 

@@ -53,6 +53,23 @@ export const processPaymentSchema = z.object({
   processedBy: z.string().max(100).optional(),
 });
 
+export const checkoutPaymentSchema = z.object({
+  hotelId: z.string().optional(),
+  paymentMethod: z.string().default('cash'),
+  amount: z.number().min(0, 'Payment amount must be non-negative'),
+  tenderedAmount: z.number().min(0).optional(),
+  changeDue: z.number().min(0).optional(),
+  transactionRef: z.string().max(100).optional(),
+  roomNumber: z.string().max(50).optional(),
+  guestName: z.string().max(100).optional(),
+  processedBy: z.string().max(100).optional(),
+});
+
+export const checkoutOrderSchema = z.object({
+  order: createOrderSchema,
+  payment: checkoutPaymentSchema,
+});
+
 export const createTableSchema = z.object({
   hotelId: z.string().optional(),
   tableNumber: z.string().min(1, 'Table number is required').max(50),

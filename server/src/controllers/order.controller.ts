@@ -35,3 +35,9 @@ export const updateOrderStatus = asyncHandler(async (req: Request, res: Response
   sendSuccess(res, order, `Order status updated to ${status}`);
 });
 
+export const checkoutOrder = asyncHandler(async (req: Request, res: Response) => {
+  const { order: orderData, payment: paymentData } = req.body;
+  const result = await storeService.checkoutOrder(orderData, paymentData);
+  sendSuccess(res, result, 'Order checked out and paid successfully', 201);
+});
+
