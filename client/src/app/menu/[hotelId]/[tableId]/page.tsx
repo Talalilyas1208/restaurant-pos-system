@@ -43,6 +43,9 @@ import { MenuItem, SelectedModifier, Order, PaymentMethod } from '../../../../ty
 import ItemModifierModal from '../../../../components/ItemModifierModal';
 import FoodTablePreviewModal from '../../../../components/FoodTablePreviewModal';
 import { StatusBadge, EmptyState } from '../../../../components/ui';
+import { useFoodOrder } from '../../../../hooks/useFoodOrder';
+import LiveOrderTracker from '../../../../components/order/LiveOrderTracker';
+import PaymentMethodSelector from '../../../../components/payment/PaymentMethodSelector';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -76,10 +79,12 @@ export default function CustomerQRMenuPage() {
   const [previewTableItem, setPreviewTableItem] = useState<MenuItem | null>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
+  // Hook for instant Redux Toolkit caching, validation middleware, and background sync
+  const { activePlacedOrder, placeFoodOrder, isSyncing } = useFoodOrder();
+
   // Guest Info
   const [customerName, setCustomerName] = useState('Table Guest');
   const [tableNotes, setTableNotes] = useState('');
-  const [activePlacedOrder, setActivePlacedOrder] = useState<Order | null>(null);
 
   // Payment method selection ('cash' | 'credit_card' | 'easypaisa' | 'jazzcash')
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'credit_card' | 'easypaisa' | 'jazzcash'>('cash');
@@ -103,23 +108,6 @@ export default function CustomerQRMenuPage() {
     senderMobile: '',
     transactionRef: '',
   });
-
-  // Placed order payment tracking
-  const [placedPaymentInfo, setPlacedPaymentInfo] = useState<{
-    method: 'cash' | 'credit_card' | 'easypaisa' | 'jazzcash';
-    ref?: string;
-    senderMobile?: string;
-    cardLast4?: string;
-  } | null>(null);
-
-  // Copy helper
-  const [copiedField, setCopiedField] = useState<string | null>(null);
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedField(label);
-    message.success(`${label} copied to clipboard!`);
-    setTimeout(() => setCopiedField(null), 2500);
-  };
 
   // Queries
   const { data: hotel } = useQuery({
@@ -150,20 +138,7 @@ export default function CustomerQRMenuPage() {
     refetchInterval: 5000,
   });
 
-  const currentOrder = liveOrder || activePlacedOrder;
-
-  // Order mutation
-  const createOrderMutation = useMutation({
-    mutationFn: (orderPayload: Partial<Order>) => api.createOrder(orderPayload),
-    onSuccess: (newOrder) => {
-      setActivePlacedOrder(newOrder);
-      setCartItems([]);
-      setIsCartOpen(false);
-      message.success('Order sent to the kitchen!');
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      queryClient.invalidateQueries({ queryKey: ['tables'] });
-    },
-  });
+  const currentOrder = activePlacedOrder || liveOrder;
 
   // Filter items
   const filteredItems = menuItems.filter((item) => {
@@ -243,72 +218,51 @@ export default function CustomerQRMenuPage() {
   const handlePlaceOrder = async () => {
     if (cartItems.length === 0) return;
 
-    // Compile payment metadata summary for kitchen & cashier notes
-    const paymentNotes =
-      paymentMethod === 'cash'
-        ? '[Payment: Cash on Delivery / Pay at Counter]'
-        : paymentMethod === 'credit_card'
-        ? `[Payment: Online Card • Ending ${cardState.cardNumber.slice(-4) || '4242'} | Holder: ${cardState.cardholderName || customerName}]`
-        : paymentMethod === 'easypaisa'
-        ? `[Payment: Easypaisa | Mobile: ${easypaisaState.senderMobile || '03XX-XXXXXXX'} | TID: ${easypaisaState.transactionRef || 'EP-PAID'}]`
-        : `[Payment: JazzCash | Mobile: ${jazzcashState.senderMobile || '03XX-XXXXXXX'} | TID: ${jazzcashState.transactionRef || 'JC-PAID'}]`;
+    try {
+      await placeFoodOrder({
+        hotelId: hotel?.id || '',
+        tableId: table?.id,
+        tableNumber: table?.tableNumber || 'Table 1',
+        orderType: 'dine_in',
+        source: 'qr_customer',
+        customerName,
+        customerNotes: tableNotes,
+        subtotal: cartSubtotal,
+        total: cartSubtotal,
+        paymentMethod,
+        paymentDetails: {
+          senderMobile:
+            paymentMethod === 'easypaisa'
+              ? easypaisaState.senderMobile
+              : paymentMethod === 'jazzcash'
+              ? jazzcashState.senderMobile
+              : undefined,
+          transactionRef:
+            paymentMethod === 'easypaisa'
+              ? easypaisaState.transactionRef
+              : paymentMethod === 'jazzcash'
+              ? jazzcashState.transactionRef
+              : undefined,
+          cardholderName: cardState.cardholderName,
+          cardLast4: cardState.cardNumber.slice(-4),
+        },
+        items: cartItems.map((ci) => ({
+          menuItemId: ci.item.id,
+          name: ci.item.name,
+          unitPrice: ci.totalPrice / ci.quantity,
+          quantity: ci.quantity,
+          totalPrice: ci.totalPrice,
+          selectedModifiers: ci.modifiers,
+          specialInstructions: ci.instructions,
+        })),
+      });
 
-    const fullCustomerNotes = [tableNotes, paymentNotes].filter(Boolean).join(' • ');
-
-    const payload: Partial<Order> = {
-      hotelId: hotel?.id,
-      tableId: table?.id,
-      tableNumber: table?.tableNumber || 'Table 1',
-      orderType: 'dine_in',
-      source: 'qr_customer',
-      customerName,
-      customerNotes: fullCustomerNotes,
-      serverStaffId: 'W-101',
-      serverStaffName: 'Marco Rossi',
-      subtotal: cartSubtotal,
-      tax: 0,
-      serviceCharge: 0,
-      discountAmount: 0,
-      total: cartSubtotal,
-      paymentStatus: paymentMethod === 'cash' ? 'unpaid' : 'paid',
-      items: cartItems.map((ci) => ({
-        menuItemId: ci.item.id,
-        name: ci.item.name,
-        unitPrice: ci.totalPrice / ci.quantity,
-        quantity: ci.quantity,
-        totalPrice: ci.totalPrice,
-        selectedModifiers: ci.modifiers,
-        specialInstructions: ci.instructions,
-      })),
-    };
-
-    // Track placed payment info for receipt banner
-    setPlacedPaymentInfo({
-      method: paymentMethod,
-      ref:
-        paymentMethod === 'easypaisa'
-          ? easypaisaState.transactionRef || 'EP-892102'
-          : paymentMethod === 'jazzcash'
-          ? jazzcashState.transactionRef || 'JC-781034'
-          : undefined,
-      senderMobile:
-        paymentMethod === 'easypaisa'
-          ? easypaisaState.senderMobile
-          : paymentMethod === 'jazzcash'
-          ? jazzcashState.senderMobile
-          : undefined,
-      cardLast4: paymentMethod === 'credit_card' ? (cardState.cardNumber.slice(-4) || '4242') : undefined,
-    });
-
-    createOrderMutation.mutate(payload);
-  };
-
-  const getStepStatus = () => {
-    if (!currentOrder) return 0;
-    if (currentOrder.status === 'pending') return 0;
-    if (currentOrder.status === 'preparing') return 1;
-    if (currentOrder.status === 'ready' || currentOrder.status === 'served' || currentOrder.status === 'completed') return 2;
-    return 0;
+      // Clear table cart and close drawer immediately (< 5ms)
+      setCartItems([]);
+      setIsCartOpen(false);
+    } catch (err: any) {
+      console.error('Failed to submit order:', err);
+    }
   };
 
   return (
@@ -371,54 +325,13 @@ export default function CustomerQRMenuPage() {
         />
       </div>
 
-      {/* ── 2. Live Order Status Tracker (When active order exists) ───────────── */}
-      {currentOrder && (
-        <div className="m-4 bg-white p-4 rounded-3xl border border-orange-200 shadow-lg shadow-orange-500/5 space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-            <span className="font-bold text-xs text-orange-600 flex items-center gap-1.5">
-              <FireOutlined className="animate-bounce" /> Live Table Order Status
-            </span>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <Tag color="orange" className="!font-mono !font-black !rounded-lg !text-xs !m-0">
-                {currentOrder.orderNumber}
-              </Tag>
-              {placedPaymentInfo?.method === 'cash' && (
-                <Tag color="warning" className="!font-bold !text-[11px] !rounded-lg !m-0">
-                  💵 Cash on Delivery
-                </Tag>
-              )}
-              {placedPaymentInfo?.method === 'credit_card' && (
-                <Tag color="processing" className="!font-bold !text-[11px] !rounded-lg !m-0">
-                  💳 Card Verified
-                </Tag>
-              )}
-              {placedPaymentInfo?.method === 'easypaisa' && (
-                <Tag color="success" className="!font-bold !text-[11px] !rounded-lg !m-0">
-                  🟢 Easypaisa Paid
-                </Tag>
-              )}
-              {placedPaymentInfo?.method === 'jazzcash' && (
-                <Tag color="error" className="!font-bold !text-[11px] !rounded-lg !m-0">
-                  🔴 JazzCash Paid
-                </Tag>
-              )}
-            </div>
-          </div>
-
-          <Steps
-            size="small"
-            current={getStepStatus()}
-            items={[
-              { title: 'Sent', icon: <ClockCircleOutlined /> },
-              { title: 'Cooking', icon: <FireOutlined /> },
-              { title: 'Ready', icon: <CheckCircleOutlined /> },
-            ]}
-          />
-          <p className="text-[11px] text-slate-500 text-center font-medium !m-0">
-            Kitchen line is preparing your selections for Table {table?.tableNumber || 'T-01'}.
-          </p>
-        </div>
-      )}
+      {/* ── 2. Live Order Status Tracker (Reusable Component from Redux Persist Cache) ── */}
+      <LiveOrderTracker
+        order={currentOrder}
+        tableNumber={table?.tableNumber}
+        onCallWaiter={handleCallWaiter}
+        className="m-4"
+      />
 
       {/* ── 3. Category Horizontal Filter Pills (Zero Black / Vibrant Theme) ─── */}
       <div className="sticky top-[162px] z-20 bg-slate-50/95 backdrop-blur px-4 py-2.5 border-b border-slate-200/80 overflow-x-auto flex gap-2 no-scrollbar">
@@ -641,346 +554,21 @@ export default function CustomerQRMenuPage() {
               />
             </div>
 
-            {/* ── Payment Method Selection (Cash, Card, Easypaisa, JazzCash) ── */}
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-800 block uppercase tracking-wide">
-                  Payment Method
-                </span>
-                <span className="text-[11px] font-semibold text-orange-600">
-                  {paymentMethod === 'cash' ? 'Pay upon service' : 'Instant Online Pay'}
-                </span>
-              </div>
-
-              {/* 4-Option Segmented Selector */}
-              <Segmented
-                block
-                size="large"
-                value={paymentMethod}
-                onChange={(val) => setPaymentMethod(val as any)}
-                options={[
-                  {
-                    label: (
-                      <div className="flex items-center justify-center gap-1 text-xs font-bold py-0.5">
-                        <DollarOutlined className="text-emerald-600" />
-                        <span>Cash</span>
-                      </div>
-                    ),
-                    value: 'cash',
-                  },
-                  {
-                    label: (
-                      <div className="flex items-center justify-center gap-1 text-xs font-bold py-0.5">
-                        <CreditCardOutlined className="text-blue-600" />
-                        <span>Card</span>
-                      </div>
-                    ),
-                    value: 'credit_card',
-                  },
-                  {
-                    label: (
-                      <div className="flex items-center justify-center gap-1 text-xs font-bold py-0.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-                        <span>Easypaisa</span>
-                      </div>
-                    ),
-                    value: 'easypaisa',
-                  },
-                  {
-                    label: (
-                      <div className="flex items-center justify-center gap-1 text-xs font-bold py-0.5">
-                        <span className="w-2 h-2 rounded-full bg-red-600 inline-block" />
-                        <span>JazzCash</span>
-                      </div>
-                    ),
-                    value: 'jazzcash',
-                  },
-                ]}
-                className="!bg-slate-100 !p-1.5 !rounded-2xl !border !border-slate-200"
-              />
-
-              {/* 1. Cash Payment Box */}
-              {paymentMethod === 'cash' && (
-                <div className="bg-amber-50/80 border border-amber-200 p-3.5 rounded-2xl space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 font-black text-sm">
-                      💵
-                    </span>
-                    <div>
-                      <h4 className="font-extrabold text-sm text-amber-950">Pay Cash at Counter or Table</h4>
-                      <p className="text-[11px] text-slate-600 font-medium">Order goes straight to the kitchen</p>
-                    </div>
-                  </div>
-                  <div className="bg-white/90 p-2.5 rounded-xl border border-amber-200/80 text-xs text-slate-700 leading-relaxed font-medium">
-                    Order is placed immediately. Please pay <span className="font-black text-orange-600">${cartSubtotal.toFixed(2)}</span> with cash directly when the food is served or at the cashier counter.
-                  </div>
-                </div>
-              )}
-
-              {/* 2. Credit / Debit Card Box */}
-              {paymentMethod === 'credit_card' && (
-                <div className="bg-blue-50/70 border border-blue-200 p-3.5 rounded-2xl space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center text-blue-700 font-black text-sm">
-                        💳
-                      </span>
-                      <div>
-                        <h4 className="font-extrabold text-sm text-blue-950">Online Card Payment</h4>
-                        <p className="text-[11px] text-slate-600 font-medium">Visa, Mastercard, UnionPay, PayPak</p>
-                      </div>
-                    </div>
-                    <Tag color="blue" className="!font-bold !text-[10px] !rounded-md !m-0">
-                      256-BIT SSL
-                    </Tag>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-700 block mb-1">Cardholder Name</label>
-                      <Input
-                        placeholder="Name on card (e.g. John Doe)"
-                        value={cardState.cardholderName}
-                        onChange={(e) => setCardState({ ...cardState, cardholderName: e.target.value })}
-                        className="!bg-white !border-slate-300 !rounded-xl !py-1.5 !text-slate-900 font-semibold"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-700 block mb-1">Card Number</label>
-                      <Input
-                        placeholder="4242 •••• •••• 4242"
-                        maxLength={19}
-                        value={cardState.cardNumber}
-                        onChange={(e) => {
-                          const val = e.target.value.replace(/\D/g, '').slice(0, 16);
-                          const formatted = val.match(/.{1,4}/g)?.join(' ') || val;
-                          setCardState({ ...cardState, cardNumber: formatted });
-                        }}
-                        className="!bg-white !border-slate-300 !rounded-xl !py-1.5 !text-slate-900 font-mono font-bold"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-[11px] font-bold text-slate-700 block mb-1">Expiry (MM/YY)</label>
-                        <Input
-                          placeholder="12/28"
-                          maxLength={5}
-                          value={cardState.expiry}
-                          onChange={(e) => {
-                            let val = e.target.value.replace(/\D/g, '').slice(0, 4);
-                            if (val.length >= 2) val = val.slice(0, 2) + '/' + val.slice(2);
-                            setCardState({ ...cardState, expiry: val });
-                          }}
-                          className="!bg-white !border-slate-300 !rounded-xl !py-1.5 !text-slate-900 font-mono font-bold text-center"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[11px] font-bold text-slate-700 block mb-1">CVV / CVC</label>
-                        <Input.Password
-                          placeholder="•••"
-                          maxLength={4}
-                          value={cardState.cvv}
-                          onChange={(e) => setCardState({ ...cardState, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) })}
-                          className="!bg-white !border-slate-300 !rounded-xl !py-1.5 !text-slate-900 font-mono font-bold text-center"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* 3. Easypaisa Payment Box */}
-              {paymentMethod === 'easypaisa' && (
-                <div className="bg-emerald-50/80 border-2 border-emerald-400/70 p-3.5 rounded-2xl space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-black text-xs shadow-sm shadow-emerald-600/30">
-                        EP
-                      </div>
-                      <div>
-                        <h4 className="font-extrabold text-sm text-emerald-950">Easypaisa Mobile Wallet</h4>
-                        <p className="text-[11px] text-emerald-800 font-semibold">Telenor Microfinance Bank</p>
-                      </div>
-                    </div>
-                    <Tag color="success" className="!font-bold !text-[10px] !rounded-md !m-0">
-                      ACTIVE TILL
-                    </Tag>
-                  </div>
-
-                  {/* Merchant Account Details & Copy */}
-                  <div className="bg-white p-3 rounded-xl border border-emerald-200 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-[10px] uppercase font-bold text-slate-500 block">Merchant Till / Mobile</span>
-                        <span className="text-base font-black text-emerald-700 font-mono">0312-9876543</span>
-                      </div>
-                      <Button
-                        size="small"
-                        icon={copiedField === 'easypaisa' ? <CheckOutlined className="text-emerald-600" /> : <CopyOutlined />}
-                        onClick={() => copyToClipboard('03129876543', 'easypaisa')}
-                        className="!rounded-lg !text-xs !font-bold !bg-emerald-50 !border-emerald-300 !text-emerald-800"
-                      >
-                        {copiedField === 'easypaisa' ? 'Copied' : 'Copy'}
-                      </Button>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] border-t border-slate-100 pt-1.5">
-                      <span className="text-slate-500 font-medium">Account Title:</span>
-                      <span className="font-bold text-slate-800">{hotel?.name || 'Grand Palace Hotel & Dining'}</span>
-                    </div>
-                  </div>
-
-                  {/* Dynamic QR Code */}
-                  <div className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-emerald-200">
-                    <div className="bg-white p-1 rounded-lg border border-slate-200 flex-shrink-0">
-                      <QRCodeSVG
-                        value={`easypaisa://pay?account=03129876543&amount=${cartSubtotal.toFixed(2)}&ref=${table?.tableNumber || 'T-01'}`}
-                        size={88}
-                        level="M"
-                      />
-                    </div>
-                    <div className="space-y-1 text-xs">
-                      <span className="font-black text-slate-800 block text-xs">Scan & Pay via Easypaisa App</span>
-                      <p className="text-[11px] text-slate-600 font-medium leading-relaxed !m-0">
-                        Transfer <span className="font-bold text-emerald-700">${cartSubtotal.toFixed(2)}</span> via Easypaisa App or dial *786#, then enter your transaction ID below.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Customer Inputs */}
-                  <div className="space-y-2">
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-700 block mb-1">Your Easypaisa Mobile Number</label>
-                      <Input
-                        placeholder="03XX-XXXXXXX"
-                        maxLength={11}
-                        value={easypaisaState.senderMobile}
-                        onChange={(e) => setEasypaisaState({ ...easypaisaState, senderMobile: e.target.value })}
-                        className="!bg-white !border-slate-300 !rounded-xl !py-1.5 !text-slate-900 font-semibold"
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="text-[11px] font-bold text-slate-700">Transaction ID (TID from 3737 SMS)</label>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setEasypaisaState({
-                              ...easypaisaState,
-                              transactionRef: `EP-${Math.floor(100000 + Math.random() * 900000)}`,
-                            })
-                          }
-                          className="text-[10px] font-bold text-emerald-700 hover:underline"
-                        >
-                          Auto-fill Demo TID
-                        </button>
-                      </div>
-                      <Input
-                        placeholder="e.g. EP-982314 or 12-digit TID"
-                        value={easypaisaState.transactionRef}
-                        onChange={(e) => setEasypaisaState({ ...easypaisaState, transactionRef: e.target.value })}
-                        className="!bg-white !border-slate-300 !rounded-xl !py-1.5 !text-slate-900 font-mono font-bold"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* 4. JazzCash Payment Box */}
-              {paymentMethod === 'jazzcash' && (
-                <div className="bg-amber-50/80 border-2 border-amber-400/70 p-3.5 rounded-2xl space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl bg-gradient-to-r from-red-600 to-amber-500 flex items-center justify-center text-white font-black text-xs shadow-sm">
-                        JC
-                      </div>
-                      <div>
-                        <h4 className="font-extrabold text-sm text-slate-900">JazzCash Mobile Wallet</h4>
-                        <p className="text-[11px] text-amber-800 font-semibold">Mobilink Microfinance Bank</p>
-                      </div>
-                    </div>
-                    <Tag color="warning" className="!font-bold !text-[10px] !rounded-md !m-0">
-                      ACTIVE TILL
-                    </Tag>
-                  </div>
-
-                  {/* Merchant Account Details & Copy */}
-                  <div className="bg-white p-3 rounded-xl border border-amber-200 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-[10px] uppercase font-bold text-slate-500 block">Merchant Till / Mobile</span>
-                        <span className="text-base font-black text-red-600 font-mono">0300-1234567</span>
-                      </div>
-                      <Button
-                        size="small"
-                        icon={copiedField === 'jazzcash' ? <CheckOutlined className="text-emerald-600" /> : <CopyOutlined />}
-                        onClick={() => copyToClipboard('03001234567', 'jazzcash')}
-                        className="!rounded-lg !text-xs !font-bold !bg-amber-50 !border-amber-300 !text-amber-900"
-                      >
-                        {copiedField === 'jazzcash' ? 'Copied' : 'Copy'}
-                      </Button>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] border-t border-slate-100 pt-1.5">
-                      <span className="text-slate-500 font-medium">Account Title:</span>
-                      <span className="font-bold text-slate-800">{hotel?.name || 'Grand Palace Hotel & Dining'}</span>
-                    </div>
-                  </div>
-
-                  {/* Dynamic QR Code */}
-                  <div className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-amber-200">
-                    <div className="bg-white p-1 rounded-lg border border-slate-200 flex-shrink-0">
-                      <QRCodeSVG
-                        value={`jazzcash://pay?account=03001234567&amount=${cartSubtotal.toFixed(2)}&ref=${table?.tableNumber || 'T-01'}`}
-                        size={88}
-                        level="M"
-                      />
-                    </div>
-                    <div className="space-y-1 text-xs">
-                      <span className="font-black text-slate-800 block text-xs">Scan & Pay via JazzCash App</span>
-                      <p className="text-[11px] text-slate-600 font-medium leading-relaxed !m-0">
-                        Transfer <span className="font-bold text-red-600">${cartSubtotal.toFixed(2)}</span> via JazzCash App or dial *786#, then enter your transaction ID below.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Customer Inputs */}
-                  <div className="space-y-2">
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-700 block mb-1">Your JazzCash Mobile Number</label>
-                      <Input
-                        placeholder="03XX-XXXXXXX"
-                        maxLength={11}
-                        value={jazzcashState.senderMobile}
-                        onChange={(e) => setJazzcashState({ ...jazzcashState, senderMobile: e.target.value })}
-                        className="!bg-white !border-slate-300 !rounded-xl !py-1.5 !text-slate-900 font-semibold"
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="text-[11px] font-bold text-slate-700">Transaction ID (TID from 8558 SMS)</label>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setJazzcashState({
-                              ...jazzcashState,
-                              transactionRef: `JC-${Math.floor(100000 + Math.random() * 900000)}`,
-                            })
-                          }
-                          className="text-[10px] font-bold text-amber-800 hover:underline"
-                        >
-                          Auto-fill Demo TID
-                        </button>
-                      </div>
-                      <Input
-                        placeholder="e.g. JC-871230 or 12-digit TID"
-                        value={jazzcashState.transactionRef}
-                        onChange={(e) => setJazzcashState({ ...jazzcashState, transactionRef: e.target.value })}
-                        className="!bg-white !border-slate-300 !rounded-xl !py-1.5 !text-slate-900 font-mono font-bold"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* ── Reusable Payment Method Selector ── */}
+            <PaymentMethodSelector
+              amount={cartSubtotal}
+              currencySymbol={hotel?.currencySymbol || '$'}
+              hotelName={hotel?.name || 'Grand Palace Hotel & Dining'}
+              tableNumber={table?.tableNumber || 'T-01'}
+              paymentMethod={paymentMethod}
+              onMethodChange={setPaymentMethod}
+              cardState={cardState}
+              onCardChange={setCardState}
+              easypaisaState={easypaisaState}
+              onEasypaisaChange={setEasypaisaState}
+              jazzcashState={jazzcashState}
+              onJazzcashChange={setJazzcashState}
+            />
           </div>
 
           {/* Drawer Footer */}
@@ -994,7 +582,7 @@ export default function CustomerQRMenuPage() {
               size="large"
               block
               onClick={handlePlaceOrder}
-              loading={createOrderMutation.isPending}
+              loading={isSyncing}
               className="!h-13 !rounded-2xl !bg-gradient-to-r !from-orange-500 via-rose-500 to-amber-500 hover:!opacity-95 !font-black !text-base !shadow-xl !shadow-orange-500/25 border-0 text-white"
             >
               {paymentMethod === 'cash'

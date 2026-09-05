@@ -13,6 +13,8 @@ import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux';
 import createWebStorage from 'redux-persist/lib/storage/createWebStorage';
 import cartReducer from './slices/cartSlice';
 import posSessionReducer from './slices/posSessionSlice';
+import ordersReducer from './slices/ordersSlice';
+import { orderValidationMiddleware } from './middleware/orderValidationMiddleware';
 
 // ─── SSR-safe localStorage for Next.js ────────────────────────────────────────
 // createWebStorage('local') works in the browser; on the server (SSR) we swap
@@ -30,6 +32,7 @@ const safeStorage =
 const rootReducer = combineReducers({
   cart: cartReducer,
   posSession: posSessionReducer,
+  orders: ordersReducer,
 });
 
 // ─── Redux Persist Config ─────────────────────────────────────────────────────
@@ -37,7 +40,7 @@ const persistConfig = {
   key: 'hotel_pos_root',
   version: 1,
   storage: safeStorage,
-  whitelist: ['cart', 'posSession'], // only these slices are persisted to localStorage
+  whitelist: ['cart', 'posSession', 'orders'], // persisted to localStorage across app reloads
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -51,7 +54,7 @@ export const store = configureStore({
         // redux-persist actions are intentionally non-serializable
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
-    }),
+    }).concat(orderValidationMiddleware),
 });
 
 export const persistor = persistStore(store);
@@ -63,4 +66,8 @@ export type AppDispatch = typeof store.dispatch;
 // Typed hooks — use these instead of plain useDispatch / useSelector everywhere
 export const useAppDispatch = () => useDispatch<AppDispatch>();
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
+
+// Re-export actions for easy access
+export * from './slices/ordersSlice';
+export * from './slices/cartSlice';
 
