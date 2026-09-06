@@ -7,14 +7,14 @@ const SOCKET_URL =
   process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') ||
   'http://localhost:5001';
 
-export function getSocket(role: string = 'pos', tableId?: string): Socket {
+export function getSocket(role: string = 'pos', tableId?: string): Socket | null {
   if (socket && socket.connected) {
     return socket;
   }
 
   if (typeof window === 'undefined') {
     // SSR safe no-op
-    return null as unknown as Socket;
+    return null;
   }
 
   if (!socket) {
@@ -76,3 +76,4 @@ export function subscribeToTables(onTableUpdated: (table: DiningTable) => void):
     s.off('table:updated', onTableUpdated);
   };
 }
+

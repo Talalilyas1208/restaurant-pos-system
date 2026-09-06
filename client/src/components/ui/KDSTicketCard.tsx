@@ -17,6 +17,7 @@ interface KDSTicketCardProps {
   elapsedMinutes: number;
   onUpdateStatus: (orderId: string, newStatus: OrderStatus) => void;
   isUpdating?: boolean;
+  isDark?: boolean;
 }
 
 export default function KDSTicketCard({
@@ -24,6 +25,7 @@ export default function KDSTicketCard({
   elapsedMinutes,
   onUpdateStatus,
   isUpdating = false,
+  isDark = false,
 }: KDSTicketCardProps) {
   const isOverdue = elapsedMinutes >= 15 && order.status !== 'completed';
 
@@ -38,12 +40,12 @@ export default function KDSTicketCard({
     <Card
       className={`!rounded-3xl shadow-sm transition-all overflow-hidden ${
         isOverdue
-          ? '!bg-rose-50/90 !border-2 !border-rose-400 animate-pulse'
+          ? isDark ? '!bg-rose-950/60 !border-2 !border-rose-500 animate-pulse text-white' : '!bg-rose-50/90 !border-2 !border-rose-400 animate-pulse'
           : order.status === 'ready'
-          ? '!bg-emerald-50/50 !border !border-emerald-200'
+          ? isDark ? '!bg-emerald-950/60 !border !border-emerald-700 text-slate-100' : '!bg-emerald-50/50 !border !border-emerald-200'
           : order.status === 'preparing'
-          ? '!bg-blue-50/40 !border !border-blue-200'
-          : '!bg-white !border !border-amber-200/90'
+          ? isDark ? '!bg-blue-950/60 !border !border-blue-700 text-slate-100' : '!bg-blue-50/40 !border !border-blue-200'
+          : isDark ? '!bg-slate-900 !border !border-slate-800 text-slate-100' : '!bg-white !border !border-amber-200/90'
       }`}
       styles={{ body: { padding: '16px' } }}
     >

@@ -4,7 +4,7 @@ import React from 'react';
 import { Button, Tag, Select, Input } from 'antd';
 import { ShoppingCartOutlined, DeleteOutlined, UserOutlined } from '@ant-design/icons';
 import { CartState, CartItem } from '../../store/slices/cartSlice';
-import { StaffUser } from '../../types';
+import { StaffUser, OrderType } from '../../types';
 import POSTicketItemCard from './POSTicketItemCard';
 import POSTicketSummary from './POSTicketSummary';
 
@@ -16,7 +16,7 @@ interface POSTicketSidebarProps {
   selectedWaiter: { id: string; name: string };
   onSelectWaiter: (waiter: { id: string; name: string }) => void;
   onClearCart: () => void;
-  onChangeOrderType: (type: any) => void;
+  onChangeOrderType: (type: OrderType) => void;
   onChangeCustomerName: (name: string) => void;
   onRemoveItem: (id: string) => void;
   onUpdateQuantity: (id: string, quantity: number) => void;

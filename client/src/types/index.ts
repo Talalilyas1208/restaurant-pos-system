@@ -86,6 +86,7 @@ export interface SelectedModifier {
 
 export interface OrderItem {
   id?: string;
+  orderId?: string;
   menuItemId?: string;
   name: string;
   unitPrice: number;

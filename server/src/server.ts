@@ -85,25 +85,28 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 // 12. Start HTTP Server
-const server = app.listen(config.port, () => {
-  console.log(`🚀 Hotel POS Backend running at http://localhost:${config.port}`);
-  console.log(`📡 Health Check: http://localhost:${config.port}/health`);
-  console.log(`📑 API V1 Base: http://localhost:${config.port}/api/v1`);
-});
-
-// 13. Initialize Real-Time WebSockets
-initSocketService(server);
-
-// Graceful Shutdown
-const handleShutdown = (signal: string) => {
-  console.log(`\nReceived ${signal}. Shutting down gracefully...`);
-  server.close(() => {
-    console.log('HTTP server closed.');
-    process.exit(0);
+let server: any;
+if (process.env.NODE_ENV !== 'test') {
+  server = app.listen(config.port, () => {
+    console.log(`🚀 Hotel POS Backend running at http://localhost:${config.port}`);
+    console.log(`📡 Health Check: http://localhost:${config.port}/health`);
+    console.log(`📑 API V1 Base: http://localhost:${config.port}/api/v1`);
   });
-};
 
-process.on('SIGTERM', () => handleShutdown('SIGTERM'));
-process.on('SIGINT', () => handleShutdown('SIGINT'));
+  // 13. Initialize Real-Time WebSockets
+  initSocketService(server);
+
+  // Graceful Shutdown
+  const handleShutdown = (signal: string) => {
+    console.log(`\nReceived ${signal}. Shutting down gracefully...`);
+    server.close(() => {
+      console.log('HTTP server closed.');
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+  process.on('SIGINT', () => handleShutdown('SIGINT'));
+}
 
 export default app;

@@ -71,6 +71,9 @@ const customTheme = {
       itemSelectedColor: '#ffffff',
       colorBgLayout: '#1a233a',
     },
+    Tag: {
+      borderRadiusSM: 8,
+    },
   },
 };
 

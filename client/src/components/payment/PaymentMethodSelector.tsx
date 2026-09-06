@@ -54,7 +54,7 @@ export default function PaymentMethodSelector({
         block
         size="large"
         value={paymentMethod}
-        onChange={(val) => onMethodChange(val as any)}
+        onChange={(val) => onMethodChange(val as 'cash' | 'credit_card' | 'easypaisa' | 'jazzcash')}
         options={[
           {
             label: (

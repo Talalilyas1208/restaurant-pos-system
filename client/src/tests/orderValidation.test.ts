@@ -93,3 +93,4 @@ describe('Order Validation Redux Middleware', () => {
     expect(payload.createdAt).toBeDefined();
   });
 });
+

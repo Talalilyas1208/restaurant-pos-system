@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
 import { BellOutlined } from '@ant-design/icons';
 import { api } from '../../../../lib/api';
+import { subscribeToOrders } from '../../../../lib/socket';
 import { MenuItem } from '../../../../types';
 import FoodTablePreviewModal from '../../../../components/FoodTablePreviewModal';
 import ItemModifierModal from '../../../../components/ItemModifierModal';
@@ -19,6 +20,7 @@ import { useTableCart } from '../../../../hooks/useTableCart';
 
 export default function CustomerQRMenuPage() {
   const params = useParams();
+  const queryClient = useQueryClient();
   const hotelSlug = (params?.hotelId as string) || 'pos-project';
   const tableToken = (params?.tableId as string) || 'gh-tbl-01';
 
@@ -44,8 +46,21 @@ export default function CustomerQRMenuPage() {
     queryKey: ['order', cart.activePlacedOrder?.id],
     queryFn: () => (cart.activePlacedOrder?.id ? api.getOrder(cart.activePlacedOrder.id) : null),
     enabled: !!cart.activePlacedOrder?.id,
-    refetchInterval: 5000,
+    refetchInterval: 30000,
   });
+
+  useEffect(() => {
+    if (!cart.activePlacedOrder?.id) return;
+    const unsub = subscribeToOrders(
+      undefined,
+      (updatedOrder) => {
+        if (updatedOrder.id === cart.activePlacedOrder?.id) {
+          queryClient.setQueryData(['order', updatedOrder.id], updatedOrder);
+        }
+      }
+    );
+    return unsub;
+  }, [cart.activePlacedOrder?.id, queryClient]);
 
   const filteredItems = menuItems.filter((item) => {
     const matchesCat = selectedCategory === 'all' || item.categoryId === selectedCategory;

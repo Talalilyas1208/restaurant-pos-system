@@ -3,7 +3,7 @@
 import React from 'react';
 import { Tag, Button, Segmented, Switch } from 'antd';
 import { ReloadOutlined, SoundOutlined } from '@ant-design/icons';
-import { ChefHat } from 'lucide-react';
+import { ChefHat, Moon, Sun } from 'lucide-react';
 import { PageHeader } from '../ui';
 
 interface KDSHeaderProps {
@@ -14,6 +14,8 @@ interface KDSHeaderProps {
   onRefetch: () => void;
   soundEnabled: boolean;
   onToggleSound: (enabled: boolean) => void;
+  isDark?: boolean;
+  onToggleDark?: (dark: boolean) => void;
 }
 
 export default function KDSHeader({
@@ -24,6 +26,8 @@ export default function KDSHeader({
   onRefetch,
   soundEnabled,
   onToggleSound,
+  isDark = false,
+  onToggleDark,
 }: KDSHeaderProps) {
   return (
     <PageHeader
@@ -47,28 +51,49 @@ export default function KDSHeader({
               { label: 'Room Service', value: 'room_service' },
               { label: 'Takeaway', value: 'takeaway' },
             ]}
-            className="!bg-slate-100 !p-1 !rounded-2xl !border !border-slate-200 font-bold text-slate-700"
+            className={`p-1 !rounded-2xl border font-bold ${
+              isDark
+                ? '!bg-slate-800 !border-slate-700 text-slate-200'
+                : '!bg-slate-100 !border-slate-200 text-slate-700'
+            }`}
           />
 
           <Button
             shape="circle"
             icon={<ReloadOutlined spin={isFetching} />}
             onClick={onRefetch}
-            className="!bg-white !border-slate-200 !text-slate-700 font-bold"
+            className={`font-bold ${
+              isDark
+                ? '!bg-slate-800 !border-slate-700 !text-slate-200'
+                : '!bg-white !border-slate-200 !text-slate-700'
+            }`}
           />
 
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-white border border-slate-200 text-xs font-bold text-slate-700 shadow-xs">
-            <SoundOutlined className={soundEnabled ? 'text-emerald-600' : 'text-slate-400'} />
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl border text-xs font-bold shadow-xs ${
+            isDark
+              ? 'bg-slate-800 border-slate-700 text-slate-200'
+              : 'bg-white border-slate-200 text-slate-700'
+          }`}>
+            <SoundOutlined className={soundEnabled ? 'text-emerald-500' : 'text-slate-400'} />
             <span className="text-[11px] hidden sm:inline">Audio</span>
-            <Switch
-              size="small"
-              checked={soundEnabled}
-              onChange={onToggleSound}
-            />
+            <Switch size="small" checked={soundEnabled} onChange={onToggleSound} />
           </div>
+
+          {onToggleDark && (
+            <button
+              onClick={() => onToggleDark(!isDark)}
+              className={`p-2 rounded-2xl border flex items-center justify-center transition-colors ${
+                isDark
+                  ? 'bg-slate-800 border-slate-700 text-amber-400 hover:bg-slate-700'
+                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+              }`}
+              title={isDark ? 'Switch to Light Mode' : 'Switch to Kitchen Dark Mode'}
+            >
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+          )}
         </div>
       }
     />
   );
 }
-

@@ -1,11 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useKDSOrders } from '../../hooks/useKDSOrders';
 import KDSHeader from '../../components/kds/KDSHeader';
 import KDSTicketColumn from '../../components/kds/KDSTicketColumn';
 
 export default function KDSPage() {
+  const [isDark, setIsDark] = useState(false);
+
   const {
     filterType,
     setFilterType,
@@ -23,7 +25,9 @@ export default function KDSPage() {
   } = useKDSOrders();
 
   return (
-    <div className="flex-1 bg-slate-100 text-slate-900 flex flex-col h-full overflow-hidden">
+    <div className={`flex-1 flex flex-col h-full overflow-hidden transition-colors ${
+      isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'
+    }`}>
       <KDSHeader
         activeCount={activeOrders.length}
         filterType={filterType}
@@ -32,6 +36,8 @@ export default function KDSPage() {
         onRefetch={refetch}
         soundEnabled={soundEnabled}
         onToggleSound={setSoundEnabled}
+        isDark={isDark}
+        onToggleDark={setIsDark}
       />
 
       {/* Kanban Ticket Columns */}
@@ -53,6 +59,7 @@ export default function KDSPage() {
           getElapsedMinutes={getElapsedMinutes}
           onUpdateStatus={handleUpdateStatus}
           isUpdating={isUpdating}
+          isDark={isDark}
         />
 
         <KDSTicketColumn
@@ -72,6 +79,7 @@ export default function KDSPage() {
           getElapsedMinutes={getElapsedMinutes}
           onUpdateStatus={handleUpdateStatus}
           isUpdating={isUpdating}
+          isDark={isDark}
         />
 
         <KDSTicketColumn
@@ -91,6 +99,7 @@ export default function KDSPage() {
           getElapsedMinutes={getElapsedMinutes}
           onUpdateStatus={handleUpdateStatus}
           isUpdating={isUpdating}
+          isDark={isDark}
         />
       </div>
     </div>

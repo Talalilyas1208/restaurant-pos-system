@@ -22,6 +22,7 @@ interface KDSTicketColumnProps {
   getElapsedMinutes: (dateStr: string) => number;
   onUpdateStatus: (id: string, status: OrderStatus) => void;
   isUpdating: boolean;
+  isDark?: boolean;
 }
 
 export default function KDSTicketColumn({
@@ -41,11 +42,12 @@ export default function KDSTicketColumn({
   getElapsedMinutes,
   onUpdateStatus,
   isUpdating,
+  isDark = false,
 }: KDSTicketColumnProps) {
   return (
-    <div className={`flex flex-col ${columnBg} rounded-3xl border-2 ${borderClass} overflow-hidden shadow-xs`}>
-      <div className={`p-3.5 ${headerBg} border-b ${borderClass} flex items-center justify-between`}>
-        <span className={`font-black text-sm ${titleColor} flex items-center gap-2`}>
+    <div className={`flex flex-col ${isDark ? '!bg-slate-900 !border-slate-800' : columnBg} rounded-3xl border-2 ${isDark ? 'border-slate-800' : borderClass} overflow-hidden shadow-xs`}>
+      <div className={`p-3.5 ${isDark ? '!bg-slate-800/80 border-slate-700' : headerBg} border-b ${isDark ? 'border-slate-700' : borderClass} flex items-center justify-between`}>
+        <span className={`font-black text-sm ${isDark ? 'text-slate-100' : titleColor} flex items-center gap-2`}>
           <span className={`w-2.5 h-2.5 rounded-full ${pulseColor}`} />
           {title} ({orders.length})
         </span>
@@ -69,6 +71,7 @@ export default function KDSTicketColumn({
               elapsedMinutes={getElapsedMinutes(order.createdAt)}
               onUpdateStatus={onUpdateStatus}
               isUpdating={isUpdating}
+              isDark={isDark}
             />
           ))
         )}

@@ -87,11 +87,13 @@ export default function POSTerminalPage() {
             filteredItems={filteredItems}
             cartItems={cart.items}
             onItemClick={handleItemClick}
+            isLoading={pos.isMenuLoading}
           />
         ) : (
           <POSTablesView
             tables={pos.tables}
             selectedTableId={cart.tableId}
+            isLoading={pos.isTablesLoading}
             onSelectTable={(tbl) => {
               dispatch(setTable({ tableId: tbl.id, tableNumber: tbl.tableNumber }));
               setActiveTab('menu');

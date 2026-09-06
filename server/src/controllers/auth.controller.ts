@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
 import { storeService } from '../services/store.service.js';
 import { signToken } from '../utils/jwt.js';
 import { sendSuccess, sendError } from '../utils/response.js';
@@ -14,7 +15,21 @@ export const loginWithPin = asyncHandler(async (req: Request, res: Response) => 
   }
 
   const staffList = await storeService.getStaffUsers();
-  const staff = staffList.find((s: StaffUser) => s.pinCode === pin && s.isActive);
+  let staff: StaffUser | undefined;
+
+  for (const s of staffList) {
+    if (!s.isActive) continue;
+    if (s.pinCode?.startsWith('$2b$')) {
+      const isMatch = await bcrypt.compare(pin, s.pinCode);
+      if (isMatch) {
+        staff = s;
+        break;
+      }
+    } else if (s.pinCode === pin) {
+      staff = s;
+      break;
+    }
+  }
 
   if (!staff) {
     sendError(res, 'Invalid PIN code or inactive staff account.', 401);
