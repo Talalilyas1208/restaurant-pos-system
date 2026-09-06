@@ -4,9 +4,11 @@
   "description": "Fullstack Hotel & Restaurant POS, Kitchen Display System & Contactless QR Menu Platform",
   "private": true,
   "scripts": {
+    "clean:ports": "lsof -ti:5001 -ti:3002 | xargs kill -9 2>/dev/null || true",
+    "predev": "npm run clean:ports",
     "dev": "npm run dev --prefix server & npm run dev --prefix client",
-    "dev:server": "npm run dev --prefix server",
-    "dev:client": "npm run dev --prefix client",
+    "dev:server": "lsof -ti:5001 | xargs kill -9 2>/dev/null || true; npm run dev --prefix server",
+    "dev:client": "lsof -ti:3002 | xargs kill -9 2>/dev/null || true; npm run dev --prefix client",
     "install:all": "npm install --prefix server && npm install --prefix client",
     "build:server": "npm run build --prefix server",
     "build:client": "npm run build --prefix client",
