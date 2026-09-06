@@ -50,6 +50,11 @@ yarn-error.log*
 logs/
 *.log
 
+# Runtime Local Persistent Data
+server/data/*.json
+server/data/*.tmp
+!server/data/.gitkeep
+
 # OS & Editor Metadata
 .DS_Store
 Thumbs.db

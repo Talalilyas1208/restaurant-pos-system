@@ -7,10 +7,12 @@ import paymentRoutes from './payment.routes.js';
 import analyticsRoutes from './analytics.routes.js';
 import healthRoutes from './health.routes.js';
 import staffRoutes from './staff.routes.js';
+import authRoutes from './auth.routes.js';
 
 const router = Router();
 
 router.use('/health', healthRoutes);
+router.use('/auth', authRoutes);
 router.use('/hotels', hotelRoutes);
 router.use('/tables', tableRoutes);
 router.use('/menu', menuRoutes);

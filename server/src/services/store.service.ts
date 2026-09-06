@@ -1,4 +1,5 @@
 import { getSupabaseClient } from '../config/supabase.js';
+import { diskStorage } from './disk-storage.service.js';
 import {
   Hotel,
   DiningTable,
@@ -235,7 +236,7 @@ let fallbackHotel: Hotel = {
   createdAt: new Date().toISOString(),
 };
 
-const fallbackTables: DiningTable[] = [
+let fallbackTables: DiningTable[] = [
   { id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b01', hotelId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', tableNumber: 'T-01', section: 'Main Dining', capacity: 2, qrCodeToken: 'gh-tbl-01', status: 'available', activeOrderId: null },
   { id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b02', hotelId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', tableNumber: 'T-02', section: 'Main Dining', capacity: 4, qrCodeToken: 'gh-tbl-02', status: 'occupied', activeOrderId: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01' },
   { id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b03', hotelId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', tableNumber: 'T-03', section: 'Main Dining', capacity: 4, qrCodeToken: 'gh-tbl-03', status: 'available', activeOrderId: null },
@@ -496,7 +497,7 @@ const fallbackMenuItems: MenuItem[] = [
   },
 ];
 
-const fallbackOrders: Order[] = [
+let fallbackOrders: Order[] = [
   {
     id: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380e01',
     hotelId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
@@ -582,6 +583,18 @@ const fallbackOrders: Order[] = [
     updatedAt: new Date(Date.now() - 5 * 60000).toISOString(),
   },
 ];
+
+let fallbackPayments: Payment[] = [];
+
+// Initialize persistent disk storage (resilience against server restarts)
+const diskState = diskStorage.init({
+  orders: fallbackOrders,
+  tables: fallbackTables,
+  payments: fallbackPayments,
+});
+fallbackOrders = diskState.orders;
+fallbackTables = diskState.tables;
+fallbackPayments = diskState.payments;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // StoreService — Supabase first with TTL Cache + Graceful Fallback
@@ -758,6 +771,7 @@ class StoreService {
       fallbackTables[idx].status = status;
       if (activeOrderId !== undefined) fallbackTables[idx].activeOrderId = activeOrderId;
       fallbackTables[idx].updatedAt = new Date().toISOString();
+      diskStorage.updateTables(fallbackTables);
       cache.invalidate('tables:');
       cache.invalidate(`table:${tableId}`);
       return fallbackTables[idx];
@@ -799,6 +813,7 @@ class StoreService {
       updatedAt: new Date().toISOString(),
     };
     fallbackTables.push(newTbl);
+    diskStorage.updateTables(fallbackTables);
     cache.invalidate('tables:');
     return newTbl;
   }
@@ -821,6 +836,7 @@ class StoreService {
     const idx = fallbackTables.findIndex((t) => t.id === id);
     if (idx > -1) {
       fallbackTables.splice(idx, 1);
+      diskStorage.updateTables(fallbackTables);
       cache.invalidate('tables:');
       cache.invalidate(`table:${id}`);
       return true;
@@ -1377,6 +1393,7 @@ class StoreService {
       updatedAt: new Date().toISOString(),
     };
     fallbackOrders.unshift(newOrder);
+    diskStorage.updateOrders(fallbackOrders);
     return newOrder;
   }
 
@@ -1575,6 +1592,7 @@ class StoreService {
       updatedAt: new Date().toISOString(),
     };
     fallbackOrders.unshift(newOrder);
+    diskStorage.updateOrders(fallbackOrders);
 
     const payment: Payment = {
       id: `pay-${Date.now()}`,
@@ -1591,6 +1609,8 @@ class StoreService {
       processedBy: paymentData.processedBy,
       createdAt: new Date().toISOString(),
     };
+    fallbackPayments.push(payment);
+    diskStorage.addPayment(payment);
 
     return { order: newOrder, payment };
   }
@@ -1628,6 +1648,7 @@ class StoreService {
       if ((status === 'completed' || status === 'cancelled') && fallbackOrders[idx].tableId) {
         await this.updateTableStatus(fallbackOrders[idx].tableId!, 'available', null);
       }
+      diskStorage.updateOrders(fallbackOrders);
       cache.invalidate('orders:');
       cache.invalidate(`order:${orderId}`);
       cache.invalidate('analytics');
@@ -1727,6 +1748,9 @@ class StoreService {
     if (targetOrder) {
       targetOrder.paymentStatus = 'paid';
     }
+
+    fallbackPayments.push(payment);
+    diskStorage.addPayment(payment);
 
     cache.invalidate('orders:');
     cache.invalidate('analytics');

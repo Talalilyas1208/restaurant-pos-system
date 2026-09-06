@@ -14,14 +14,24 @@ import {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api/v1';
 
 // ─── Core Fetcher ─────────────────────────────────────────────────────────────
+const getAuthHeader = (): Record<string, string> => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('pos_auth_token') || 'demo-staff-token';
+    if (token) return { Authorization: `Bearer ${token}` };
+  }
+  return {};
+};
+
 async function fetcher<T>(
   url: string,
   options?: RequestInit & { signal?: AbortSignal },
 ): Promise<T> {
+  const authHeaders = getAuthHeader();
   const res = await fetch(`${API_BASE}${url}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders,
       ...options?.headers,
     },
   });
@@ -125,4 +135,19 @@ export const api = {
   // ── Analytics ──────────────────────────────────────────────────────────────
   getAnalytics: (signal?: AbortSignal) =>
     fetcher<AnalyticsSummary>('/analytics/dashboard', { signal }),
+
+  // ── Auth ───────────────────────────────────────────────────────────────────
+  loginWithPin: (pin: string) =>
+    fetcher<{ token: string; user: StaffUser }>('/auth/pin-login', {
+      method: 'POST',
+      body: JSON.stringify({ pin }),
+    }),
+
+  createGuestSession: (tableToken: string) =>
+    fetcher<{ token: string; table: DiningTable }>('/auth/guest-session', {
+      method: 'POST',
+      body: JSON.stringify({ tableToken }),
+    }),
+
+  getMe: () => fetcher<any>('/auth/me'),
 };

@@ -76,3 +76,4 @@ export function usePOSData(cart: CartState) {
     totalCartQty,
   };
 }
+

@@ -8,6 +8,7 @@ import { errorHandler } from './middlewares/errorHandler.js';
 import { requestId, noCache } from './middlewares/cacheControl.js';
 import { getHealth } from './controllers/health.controller.js';
 import { generalLimiter } from './middlewares/rateLimiter.js';
+import { initSocketService } from './services/socket.service.js';
 
 const app = express();
 
@@ -89,6 +90,9 @@ const server = app.listen(config.port, () => {
   console.log(`📡 Health Check: http://localhost:${config.port}/health`);
   console.log(`📑 API V1 Base: http://localhost:${config.port}/api/v1`);
 });
+
+// 13. Initialize Real-Time WebSockets
+initSocketService(server);
 
 // Graceful Shutdown
 const handleShutdown = (signal: string) => {

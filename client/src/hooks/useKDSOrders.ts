@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
 import { api } from '../lib/api';
+import { subscribeToOrders } from '../lib/socket';
 import { Order, OrderStatus } from '../types';
 
 export function useKDSOrders() {
@@ -9,6 +10,30 @@ export function useKDSOrders() {
   const [filterType, setFilterType] = useState<string>('all');
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [now, setNow] = useState<number>(Date.now());
+
+  // Real-time WebSocket Push Synchronization (< 50ms)
+  useEffect(() => {
+    const unsubscribe = subscribeToOrders(
+      (newOrder: Order) => {
+        queryClient.setQueryData<Order[]>(['orders'], (old = []) => {
+          const exists = old.some((o) => o.id === newOrder.id);
+          if (exists) return old;
+          return [newOrder, ...old];
+        });
+        message.info({
+          content: `🔔 New Order #${newOrder.orderNumber} received for Table ${newOrder.tableNumber || 'Takeaway'}!`,
+          duration: 3,
+        });
+      },
+      (updatedOrder: Order) => {
+        queryClient.setQueryData<Order[]>(['orders'], (old = []) => {
+          return old.map((o) => (o.id === updatedOrder.id ? updatedOrder : o));
+        });
+      }
+    );
+
+    return () => unsubscribe();
+  }, [queryClient]);
 
   // Tick for wait timer calculation
   useEffect(() => {
@@ -19,7 +44,7 @@ export function useKDSOrders() {
   const { data: orders = [], isFetching, refetch } = useQuery({
     queryKey: ['orders'],
     queryFn: () => api.getOrders(),
-    refetchInterval: 6000,
+    refetchInterval: 30000, // WebSocket primary, 30s background safety sync
   });
 
   // Instant Optimistic Update Mutation

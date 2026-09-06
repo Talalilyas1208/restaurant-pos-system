@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { storeService } from '../services/store.service.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 import { asyncHandler } from '../middlewares/asyncHandler.js';
+import { notifyTableUpdated } from '../services/socket.service.js';
 
 export const getAllTables = asyncHandler(async (_req: Request, res: Response) => {
   const tables = await storeService.getTables();
@@ -26,11 +27,13 @@ export const updateTableStatus = asyncHandler(async (req: Request, res: Response
     sendError(res, 'Table not found', 404);
     return;
   }
+  notifyTableUpdated(updated);
   sendSuccess(res, updated, 'Table status updated successfully');
 });
 
 export const createTable = asyncHandler(async (req: Request, res: Response) => {
   const newTable = await storeService.addTable(req.body);
+  notifyTableUpdated(newTable);
   sendSuccess(res, newTable, 'Table created successfully', 201);
 });
 
