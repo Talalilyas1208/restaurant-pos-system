@@ -13,7 +13,7 @@ export interface CartItem {
   imageUrl?: string;
 }
 
-interface CartState {
+export interface CartState {
   items: CartItem[];
   tableId: string | null;
   tableNumber: string | null;
