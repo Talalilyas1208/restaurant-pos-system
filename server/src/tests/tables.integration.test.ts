@@ -37,3 +37,4 @@ describe('Tables Integration API', { timeout: 15000 }, () => {
     expect(res.status).toBe(404);
   });
 });
+

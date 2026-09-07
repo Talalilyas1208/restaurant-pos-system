@@ -249,3 +249,4 @@ export const fallbackMenuItems: MenuItem[] = [
     allergens: [],
   },
 ];
+

@@ -18,3 +18,4 @@ export function setFallbackTables(tables: DiningTable[]): void {
 export function getFallbackTables(): DiningTable[] {
   return fallbackTables;
 }
+
