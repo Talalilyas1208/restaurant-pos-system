@@ -27,7 +27,7 @@ export interface PaymentMethodSelectorProps {
 export default function PaymentMethodSelector({
   amount,
   currencySymbol = '$',
-  hotelName = 'Grand Palace Hotel & Dining',
+  hotelName = 'Restaurant POS System',
   tableNumber = 'T-01',
   paymentMethod,
   onMethodChange,

@@ -94,7 +94,7 @@ class AnalyticsService {
       averageOrderValue: parseFloat(avgOrder.toFixed(2)),
       popularItems: [
         { name: 'Prime Angus Ribeye Steak (10oz)', quantity: 24, revenue: 864.00 },
-        { name: 'The Grand Horizon Wagyu Burger', quantity: 18, revenue: 378.00 },
+        { name: 'The Restaurant POS Wagyu Burger', quantity: 18, revenue: 378.00 },
         { name: 'Diavola Spicy Pepperoni Pizza', quantity: 15, revenue: 292.50 },
         { name: 'Pan-Seared Atlantic Salmon', quantity: 12, revenue: 342.00 },
         { name: 'Sparkling Yuzu Berry Spritz', quantity: 30, revenue: 225.00 },

@@ -54,7 +54,7 @@ export default function CartCheckoutDrawer({
   onTableNotesChange,
   currencySymbol = '$',
   cartSubtotal,
-  hotelName = 'Grand Palace Hotel & Dining',
+  hotelName = 'Restaurant POS System',
   paymentMethod,
   onPaymentMethodChange,
   cardState,
