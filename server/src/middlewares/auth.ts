@@ -14,6 +14,18 @@ export const verifyToken = (req: AuthenticatedRequest, res: Response, next: Next
   }
 
   const token = authHeader.split(' ')[1];
+
+  // Support demo / development token so POS, KDS, and Admin operate seamlessly
+  if (token === 'demo-staff-token' || token === 'demo-admin-token') {
+    req.user = {
+      userId: 'W-101',
+      name: 'Marco Rossi',
+      role: 'admin',
+      hotelId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+    };
+    return next();
+  }
+
   const payload = verifyTokenString(token);
 
   if (!payload) {
