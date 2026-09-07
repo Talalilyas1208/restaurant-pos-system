@@ -7,6 +7,7 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { ConfigProvider, theme, App, Spin } from 'antd';
 import { store, persistor } from './index';
 import { queryClient, persister } from '../lib/queryClient';
+import { AntdAppBridge } from '../lib/antdMessage';
 
 // ─── Ant Design Custom Theme ──────────────────────────────────────────────────
 const customTheme = {
@@ -105,6 +106,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         >
           <ConfigProvider theme={customTheme}>
             <App>
+              <AntdAppBridge />
               {children}
             </App>
           </ConfigProvider>
