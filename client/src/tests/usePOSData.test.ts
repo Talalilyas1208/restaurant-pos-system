@@ -67,3 +67,4 @@ describe('usePOSData Calculations Unit Tests', () => {
     expect(calculateLineItemTotal(10.0, 0)).toBe(10.0); // minimum quantity 1
   });
 });
+
