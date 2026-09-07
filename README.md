@@ -1,4 +1,4 @@
-# 🍽️ Grand Horizon - Hotel & Restaurant POS & Contactless QR Menu System
+# 🍽️ Restaurant POS System - Hotel & Restaurant POS & Contactless QR Menu System
 
 [![Next.js](https://img.shields.io/badge/Next.js-14.2-black?logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=black)](https://react.dev/)
@@ -16,7 +16,7 @@ A modern, production-ready, full-stack **Point of Sale (POS)**, **Kitchen Displa
 
 ## 🧊 3D System Dimension Breakdown (3-Dimensional Architecture)
 
-Grand Horizon is engineered across **3 interconnected operational dimensions**, ensuring synchronized data flow between diners, service staff, kitchen staff, and management in real time.
+Restaurant POS System is engineered across **3 interconnected operational dimensions**, ensuring synchronized data flow between diners, service staff, kitchen staff, and management in real time.
 
 ```
                       ┌──────────────────────────────────────────────┐

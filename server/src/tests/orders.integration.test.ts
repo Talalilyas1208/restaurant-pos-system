@@ -27,7 +27,7 @@ describe('Orders Integration API', { timeout: 15000 }, () => {
       tableNumber: 'T-01',
       items: [
         {
-          name: 'The Grand Horizon Wagyu Burger',
+          name: 'The Restaurant POS Wagyu Burger',
           unitPrice: 21.0,
           quantity: 2,
           totalPrice: 42.0,
