@@ -68,6 +68,19 @@ describe('Auth Middleware (verifyToken)', () => {
     expect(req.user?.userId).toBe('A-001');
     expect(req.user?.role).toBe('admin');
   });
+
+  it('should accept demo-staff-token as admin role', () => {
+    const req = {
+      headers: { authorization: 'Bearer demo-staff-token' },
+    } as AuthenticatedRequest;
+    const res = mockResponse();
+    const next = vi.fn() as NextFunction;
+
+    verifyToken(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(req.user?.role).toBe('admin');
+  });
 });
 
 describe('RBAC Middleware (requireRole)', () => {

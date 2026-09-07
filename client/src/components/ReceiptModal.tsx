@@ -215,7 +215,7 @@ export default function ReceiptModal({
             {/* QR Code */}
             <div className="flex flex-col items-center justify-center pt-1 space-y-1">
               <QRCodeSVG
-                value={`https://grandhorizon.com/invoice/${order.orderNumber}`}
+                value={`https://restaurantpos.com/invoice/${order.orderNumber}`}
                 size={75}
                 bgColor="#ffffff"
                 fgColor="#000000"

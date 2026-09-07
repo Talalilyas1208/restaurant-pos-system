@@ -157,7 +157,7 @@ export const fallbackMenuItems: MenuItem[] = [
     id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380d07',
     hotelId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     categoryId: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380c03',
-    name: 'The Grand Horizon Wagyu Burger',
+    name: 'The Restaurant POS Wagyu Burger',
     description: 'Brioche bun, 8oz Wagyu patty, aged white cheddar, caramelized onion jam, truffle fries',
     price: 21.00,
     costPrice: 7.20,
@@ -249,3 +249,4 @@ export const fallbackMenuItems: MenuItem[] = [
     allergens: [],
   },
 ];
+

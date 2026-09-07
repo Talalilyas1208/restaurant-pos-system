@@ -6,17 +6,17 @@
 INSERT INTO hotels (id, name, slug, tagline, logo_url, currency, currency_symbol, tax_rate, service_charge_rate, address, phone, email)
 VALUES (
     'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-    'Grand Horizon Hotel & Bistro',
-    'grand-horizon',
-    'Fine Dining & Luxury Hospitality',
+    'Restaurant POS System',
+    'restaurant-pos',
+    'Modern Restaurant & Digital QR Dining',
     'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=150&auto=format&fit=crop&q=80',
     'USD',
     '$',
     8.50,
     5.00,
-    '742 Evergreen Terrace, Suite 100',
+    '742 Restaurant Ave, Suite 100',
     '+1 (555) 234-5678',
-    'dining@grandhorizon.com'
+    'dining@restaurantpos.com'
 ) ON CONFLICT (slug) DO NOTHING;
 
 -- 2. Insert Dining Tables / Rooms
@@ -51,7 +51,7 @@ VALUES
     ('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d04', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380c02', 'Pan-Seared Atlantic Salmon', 'Wild salmon fillet, lemon dill beurre blanc, quinoa pilaf & baby carrots', 28.50, 9.50, 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400', TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, 18, 620),
     ('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d05', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380c02', 'Wild Mushroom Tagliatelle', 'Fresh hand-cut pasta, porcini mushrooms, black truffle cream, aged parmesan', 22.00, 6.00, 'https://images.unsplash.com/photo-1621996346565-e3d5d6281061?w=400', TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, 15, 590),
     ('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d06', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380c03', 'Diavola Spicy Pepperoni Pizza', 'San Marzano tomato, fior di latte mozzarella, spicy soppressata, chili honey', 19.50, 4.80, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400', TRUE, FALSE, FALSE, FALSE, TRUE, TRUE, 14, 780),
-    ('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d07', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380c03', 'The Grand Horizon Wagyu Burger', 'Brioche bun, 8oz Wagyu patty, aged white cheddar, caramelized onion jam, truffle fries', 21.00, 7.20, 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400', TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, 16, 920),
+    ('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d07', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380c03', 'The Restaurant POS Wagyu Burger', 'Brioche bun, 8oz Wagyu patty, aged white cheddar, caramelized onion jam, truffle fries', 21.00, 7.20, 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400', TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, 16, 920),
     ('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d08', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380c04', 'Molten Belgian Chocolate Lava Cake', 'Warm molten center, vanilla bean gelato, raspberry coulis & gold leaf', 11.50, 3.10, 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400', TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, 12, 540),
     ('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d09', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380c04', 'Madagascar Vanilla Bean Panna Cotta', 'Silky infused cream, passionfruit gel, fresh berries & mint', 9.50, 2.50, 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400', TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, 8, 320),
     ('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380d10', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380c05', 'Sparkling Yuzu Berry Spritz', 'Japanese yuzu, wild berry puree, sparkling mineral water, fresh rosemary sprig', 7.50, 1.20, 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400', TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, 5, 110),
