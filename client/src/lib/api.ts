@@ -116,6 +116,12 @@ export const api = {
   createOrder: (order: Partial<Order>) =>
     fetcher<Order>('/orders', { method: 'POST', body: JSON.stringify(order) }),
 
+  createMockOrder: (params?: { tableId?: string; customerName?: string }) =>
+    fetcher<Order>('/orders/mock', { method: 'POST', body: JSON.stringify(params || {}) }),
+
+  clearAllOrders: () =>
+    fetcher<{ success: boolean }>('/orders/clear', { method: 'DELETE' }),
+
   checkoutOrder: (payload: { order: Partial<Order>; payment: any }) =>
     fetcher<{ order: Order; payment: Payment }>('/orders/checkout', {
       method: 'POST',
