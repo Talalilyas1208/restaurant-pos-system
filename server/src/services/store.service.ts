@@ -5,6 +5,7 @@ import { staffService } from './staff.service.js';
 import { orderService } from './order.service.js';
 import { paymentService } from './payment.service.js';
 import { analyticsService } from './analytics.service.js';
+import { mockOrderService } from './mock-order.service.js';
 
 export const storeService = {
   // Hotel
@@ -39,6 +40,8 @@ export const storeService = {
   getOrderById: orderService.getOrderById.bind(orderService),
   createOrder: orderService.createOrder.bind(orderService),
   updateOrderStatus: orderService.updateOrderStatus.bind(orderService),
+  createMockOrder: mockOrderService.createMockOrder.bind(mockOrderService),
+  clearOrders: mockOrderService.clearOrders.bind(mockOrderService),
 
   // Payments & Checkout
   processPayment: paymentService.processPayment.bind(paymentService),
@@ -56,4 +59,6 @@ export {
   orderService,
   paymentService,
   analyticsService,
+  mockOrderService,
 };
+

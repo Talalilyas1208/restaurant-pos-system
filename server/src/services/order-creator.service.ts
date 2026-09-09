@@ -148,6 +148,12 @@ export async function createOrderInternal(orderData: Partial<Order>): Promise<Or
     updatedAt: new Date().toISOString(),
   };
   fallbackOrders.unshift(newOrder);
+  if (newOrder.tableId) {
+    await tableService.updateTableStatus(newOrder.tableId, 'occupied', newId);
+  }
   diskStorage.updateOrders(fallbackOrders);
+  cache.invalidate('orders:');
+  cache.invalidate('analytics');
   return newOrder;
 }
+
