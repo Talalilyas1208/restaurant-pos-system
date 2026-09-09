@@ -51,6 +51,9 @@ case "$1" in
       cp -p "$INDEX_FILE" "$BAK_FILE" 2>/dev/null || true
     fi
     ;;
+  watch)
+    node "${REPO_ROOT}/scripts/git-guard-watcher.js"
+    ;;
   *)
     check_and_heal
     ;;
