@@ -23,13 +23,15 @@ VALUES (
 INSERT INTO dining_tables (id, hotel_id, table_number, section, capacity, qr_code_token, status)
 VALUES 
     ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b01', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'T-01', 'Main Dining', 2, 'gh-tbl-01', 'available'),
-    ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b02', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'T-02', 'Main Dining', 4, 'gh-tbl-02', 'occupied'),
+    ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b02', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'T-02', 'Main Dining', 4, 'gh-tbl-02', 'available'),
     ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b03', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'T-03', 'Main Dining', 4, 'gh-tbl-03', 'available'),
-    ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b04', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'T-04', 'Patio Garden', 6, 'gh-tbl-04', 'billed'),
+    ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b04', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'T-04', 'Main Dining', 6, 'gh-tbl-04', 'available'),
     ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b05', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'T-05', 'Patio Garden', 2, 'gh-tbl-05', 'available'),
-    ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b06', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'R-101', 'Room Service', 2, 'gh-rm-101', 'available'),
-    ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b07', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'R-204', 'Room Service', 4, 'gh-rm-204', 'available'),
-    ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b08', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Bar-01', 'Lounge & Bar', 2, 'gh-bar-01', 'available')
+    ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b06', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'T-06', 'Patio Garden', 4, 'gh-tbl-06', 'available'),
+    ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b07', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'T-07', 'Patio Garden', 6, 'gh-tbl-07', 'available'),
+    ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b08', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'T-08', 'Rooftop Terrace', 4, 'gh-tbl-08', 'available'),
+    ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b09', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'T-09', 'VIP Lounge', 8, 'gh-tbl-09', 'available'),
+    ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b10', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'T-10', 'Bar Counter', 2, 'gh-tbl-10', 'available')
 ON CONFLICT (qr_code_token) DO NOTHING;
 
 -- 3. Insert Menu Categories
