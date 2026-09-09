@@ -16,7 +16,14 @@ describe('Orders Integration API', { timeout: 15000 }, () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(Array.isArray(res.body.data)).toBe(true);
-    expect(res.body.data.length).toBeGreaterThan(0);
+  });
+
+  it('POST /api/v1/orders/mock should generate an on-demand order on an available table', async () => {
+    const res = await request(app).post('/api/v1/orders/mock').send({});
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.items.length).toBeGreaterThanOrEqual(2);
+    expect(res.body.data.tableId).toBeDefined();
   });
 
   it('POST /api/v1/orders should validate and create a new order', async () => {

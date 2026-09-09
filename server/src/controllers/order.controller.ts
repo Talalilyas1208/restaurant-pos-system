@@ -46,3 +46,15 @@ export const checkoutOrder = asyncHandler(async (req: Request, res: Response) =>
   sendSuccess(res, result, 'Order checked out and paid successfully', 201);
 });
 
+export const createMockOrder = asyncHandler(async (req: Request, res: Response) => {
+  const order = await storeService.createMockOrder(req.body);
+  notifyOrderCreated(order);
+  sendSuccess(res, order, 'On-demand mock order created successfully', 201);
+});
+
+export const clearOrders = asyncHandler(async (_req: Request, res: Response) => {
+  await storeService.clearOrders();
+  sendSuccess(res, null, 'All orders cleared successfully');
+});
+
+
