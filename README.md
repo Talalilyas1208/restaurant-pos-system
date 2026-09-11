@@ -122,11 +122,11 @@ volumes:
 ```mermaid
 graph TB
     subgraph Frontend
-        FE[Next.js (Vercel Edge)]
+        FE["Next.js (Vercel Edge)"]
     end
     subgraph Backend
-        BE[Express.js (Node.js Deployment)]
-        DB[Supabase PostgreSQL (Managed)]
+        BE["Express.js (Node.js Deployment)"]
+        DB["Supabase PostgreSQL (Managed)"]
     end
     FE -->|HTTPS| BE
     BE -->|SQL/REST| DB
