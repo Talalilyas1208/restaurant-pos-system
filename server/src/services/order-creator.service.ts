@@ -1,5 +1,5 @@
 import { getSupabaseClient } from '../config/supabase.js';
-import { Order } from '../types/index.js';
+import { Order, OrderItem } from '../types/index.js';
 import { cache, TTL } from './cache.js';
 import { diskStorage } from './disk-storage.service.js';
 import { hotelService } from './hotel.service.js';
@@ -14,6 +14,7 @@ export async function createOrderInternal(orderData: Partial<Order>): Promise<Or
   const discountAmount = orderData.discountAmount || 0;
   const total = parseFloat((subtotal + tax + serviceCharge - discountAmount).toFixed(2));
   const orderNumber = orderData.orderNumber || `#POS-${Math.floor(1000 + Math.random() * 9000)}`;
+  const nowIso = new Date().toISOString();
 
   const supabase = getSupabaseClient();
   if (supabase) {
@@ -70,6 +71,19 @@ export async function createOrderInternal(orderData: Partial<Order>): Promise<Or
         cache.invalidate('orders:');
         cache.invalidate('analytics');
 
+        const mappedItems: OrderItem[] = items.map((i, idx) => ({
+          id: `oi-${orderRow.id}-${idx}`,
+          orderId: orderRow.id,
+          menuItemId: i.menuItemId,
+          name: i.name,
+          unitPrice: i.unitPrice ?? 0,
+          quantity: i.quantity ?? 1,
+          totalPrice: i.totalPrice ?? (i.unitPrice ?? 0) * (i.quantity ?? 1),
+          selectedModifiers: i.selectedModifiers,
+          specialInstructions: i.specialInstructions,
+          status: 'pending',
+        }));
+
         const createdOrder: Order = {
           id: orderRow.id,
           hotelId: orderRow.hotel_id,
@@ -82,24 +96,18 @@ export async function createOrderInternal(orderData: Partial<Order>): Promise<Or
           customerName: orderRow.customer_name,
           customerPhone: orderRow.customer_phone ?? undefined,
           customerNotes: orderRow.customer_notes ?? undefined,
-          items: items.map((i, idx) => ({
-            id: `oi-${orderRow.id}-${idx}`,
-            orderId: orderRow.id,
-            menuItemId: i.menuItemId,
-            name: i.name,
-            unitPrice: i.unitPrice ?? 0,
-            quantity: i.quantity ?? 1,
-            totalPrice: i.totalPrice ?? (i.unitPrice ?? 0) * (i.quantity ?? 1),
-            selectedModifiers: i.selectedModifiers,
-            specialInstructions: i.specialInstructions,
-            status: 'pending',
-          })),
+          items: mappedItems,
           subtotal,
           tax,
           serviceCharge,
           discountAmount,
           total,
           paymentStatus: orderRow.payment_status,
+          amountPaid: 0,
+          balanceRemaining: total,
+          version: 1,
+          idempotencyKey: orderData.idempotencyKey,
+          kotRounds: [{ roundNumber: 1, createdAt: nowIso, items: mappedItems }],
           serverStaffId: orderRow.server_staff_id ?? undefined,
           serverStaffName: orderRow.server_staff_name ?? undefined,
           createdAt: orderRow.created_at,
@@ -116,6 +124,19 @@ export async function createOrderInternal(orderData: Partial<Order>): Promise<Or
 
   // Fallback in-memory
   const newId = `ord-${Date.now()}`;
+  const mappedItems: OrderItem[] = (orderData.items || []).map((i, idx) => ({
+    id: `oi-${Date.now()}-${idx}`,
+    orderId: newId,
+    menuItemId: i.menuItemId,
+    name: i.name,
+    unitPrice: i.unitPrice ?? 0,
+    quantity: i.quantity ?? 1,
+    totalPrice: i.totalPrice ?? (i.unitPrice ?? 0) * (i.quantity ?? 1),
+    selectedModifiers: i.selectedModifiers,
+    specialInstructions: i.specialInstructions,
+    status: 'pending',
+  }));
+
   const newOrder: Order = {
     id: newId,
     hotelId: orderData.hotelId || hotel.id,
@@ -130,22 +151,16 @@ export async function createOrderInternal(orderData: Partial<Order>): Promise<Or
     customerNotes: orderData.customerNotes,
     serverStaffId: orderData.serverStaffId || 'W-101',
     serverStaffName: orderData.serverStaffName || 'Marco Rossi',
-    items: (orderData.items || []).map((i, idx) => ({
-      id: `oi-${Date.now()}-${idx}`,
-      orderId: newId,
-      menuItemId: i.menuItemId,
-      name: i.name,
-      unitPrice: i.unitPrice ?? 0,
-      quantity: i.quantity ?? 1,
-      totalPrice: i.totalPrice ?? (i.unitPrice ?? 0) * (i.quantity ?? 1),
-      selectedModifiers: i.selectedModifiers,
-      specialInstructions: i.specialInstructions,
-      status: 'pending',
-    })),
+    items: mappedItems,
     subtotal, tax, serviceCharge, discountAmount, total,
     paymentStatus: 'unpaid',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    amountPaid: 0,
+    balanceRemaining: total,
+    version: 1,
+    idempotencyKey: orderData.idempotencyKey,
+    kotRounds: [{ roundNumber: 1, createdAt: nowIso, items: mappedItems }],
+    createdAt: nowIso,
+    updatedAt: nowIso,
   };
   fallbackOrders.unshift(newOrder);
   if (newOrder.tableId) {
@@ -156,4 +171,3 @@ export async function createOrderInternal(orderData: Partial<Order>): Promise<Or
   cache.invalidate('analytics');
   return newOrder;
 }
-

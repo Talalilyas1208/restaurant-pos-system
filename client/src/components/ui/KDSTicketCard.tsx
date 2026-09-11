@@ -51,13 +51,18 @@ export default function KDSTicketCard({
     >
       {/* Top Ticket Header */}
       <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="font-black text-base text-slate-900">
             {order.tableNumber ? `Table ${order.tableNumber}` : `#${order.id.slice(-4).toUpperCase()}`}
           </span>
           <Tag color={orderTypeTagColor} className="!m-0 capitalize font-bold text-[10px] !rounded-md">
             {order.orderType.replace('_', ' ')}
           </Tag>
+          {order.kotRounds && order.kotRounds.length > 0 && (
+            <Tag color="cyan" className="!m-0 font-extrabold text-[10px] !rounded-md">
+              KOT #{order.kotRounds[order.kotRounds.length - 1].roundNumber}
+            </Tag>
+          )}
         </div>
 
         {/* Elapsed Timer */}

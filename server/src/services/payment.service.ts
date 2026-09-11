@@ -110,9 +110,30 @@ class PaymentService {
       createdAt: new Date().toISOString(),
     };
 
-    const targetOrder = await orderService.updateOrderStatus(paymentData.orderId, 'completed');
+    let targetOrder: Order | null | undefined = fallbackOrders.find((o) => o.id === paymentData.orderId);
     if (targetOrder) {
-      targetOrder.paymentStatus = 'paid';
+      const prevPaid = targetOrder.amountPaid || 0;
+      const totalPaid = parseFloat((prevPaid + paymentData.amount).toFixed(2));
+      const balanceRemaining = Math.max(0, parseFloat((targetOrder.total - totalPaid).toFixed(2)));
+
+      targetOrder.amountPaid = totalPaid;
+      targetOrder.balanceRemaining = balanceRemaining;
+      targetOrder.version = (targetOrder.version || 1) + 1;
+      targetOrder.updatedAt = new Date().toISOString();
+
+      if (balanceRemaining <= 0.01) {
+        targetOrder.paymentStatus = 'paid';
+        targetOrder.status = 'completed';
+        if (targetOrder.tableId) {
+          await tableService.updateTableStatus(targetOrder.tableId, 'available', null);
+        }
+      } else {
+        targetOrder.paymentStatus = 'partially_paid';
+      }
+      diskStorage.updateOrders(fallbackOrders);
+    } else {
+      targetOrder = await orderService.updateOrderStatus(paymentData.orderId, 'completed');
+      if (targetOrder) targetOrder.paymentStatus = 'paid';
     }
 
     fallbackPayments.push(payment);

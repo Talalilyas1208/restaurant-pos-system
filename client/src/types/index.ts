@@ -97,6 +97,14 @@ export interface OrderItem {
   status?: 'pending' | 'preparing' | 'ready' | 'served';
 }
 
+export interface KOTRound {
+  roundNumber: number;
+  createdAt: string;
+  items: OrderItem[];
+  printedAt?: string;
+  note?: string;
+}
+
 export interface Order {
   id: string;
   hotelId: string;
@@ -116,6 +124,11 @@ export interface Order {
   discountAmount: number;
   total: number;
   paymentStatus: PaymentStatus;
+  amountPaid?: number;
+  balanceRemaining?: number;
+  version?: number;
+  idempotencyKey?: string;
+  kotRounds?: KOTRound[];
   serverStaffId?: string;
   serverStaffName?: string;
   createdAt: string;
