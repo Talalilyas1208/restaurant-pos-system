@@ -18,17 +18,17 @@
 
 ```mermaid
 flowchart LR
-    subgraph FoH [Dimension 1 – Front‑of‑House]
-        POS[Touch POS Terminal (/pos)]
-        QR[QR Guest Menu (/menu/:hotel/:table)]
+    subgraph FoH["Dimension 1 – Front‑of‑House"]
+        POS["Touch POS Terminal (/pos)"]
+        QR["QR Guest Menu (/menu/:hotel/:table)"]
     end
-    subgraph BoH [Dimension 2 – Back‑of‑House]
-        KDS[Kitchen Display (KDS) (/kds)]
+    subgraph BoH["Dimension 2 – Back‑of‑House"]
+        KDS["Kitchen Display (KDS) (/kds)"]
     end
-    subgraph Core [Dimension 3 – Core Services]
-        API[Express.js API (/api/v1)]
-        DB[Supabase PostgreSQL]
-        CDN[Static Asset CDN]
+    subgraph Core["Dimension 3 – Core Services"]
+        API["Express.js API (/api/v1)"]
+        DB["Supabase PostgreSQL"]
+        CDN["Static Asset CDN"]
     end
     POS -->|REST/WS| API
     QR -->|REST/WS| API
