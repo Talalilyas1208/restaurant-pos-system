@@ -18,15 +18,15 @@
 
 ```mermaid
 flowchart LR
-    subgraph FoH[Dimension 1 – Front‑of‑House]
-        POS[Touch POS Terminal<br/>/pos]
-        QR[QR Guest Menu<br/>/menu/:hotel/:table]
+    subgraph FoH [Dimension 1 – Front‑of‑House]
+        POS[Touch POS Terminal (/pos)]
+        QR[QR Guest Menu (/menu/:hotel/:table)]
     end
-    subgraph BoH[Dimension 2 – Back‑of‑House]
-        KDS[Kitchen Display (KDS)<br/>/kds]
+    subgraph BoH [Dimension 2 – Back‑of‑House]
+        KDS[Kitchen Display (KDS) (/kds)]
     end
-    subgraph Core[Dimension 3 – Core Services]
-        API[Express.js API<br/>/api/v1]
+    subgraph Core [Dimension 3 – Core Services]
+        API[Express.js API (/api/v1)]
         DB[Supabase PostgreSQL]
         CDN[Static Asset CDN]
     end
@@ -117,7 +117,7 @@ volumes:
 ```
 
 ### Kubernetes (optional production)
-> **Tip:** See `k8s/` folder for ready‑made Helm charts. The diagram below illustrates the high‑level topology.
+> **Tip:** See the `k8s/` folder for ready‑made Helm charts.
 
 ```mermaid
 graph TB
@@ -158,49 +158,47 @@ sequenceDiagram
     API->>DB: UPDATE status=COMPLETED, table=AVAILABLE
 ```
 
-> The API also publishes WebSocket events for instant UI updates; the diagram abstracts this via polling for brevity.
-
 ---
 
 ## ⚡ Scalability & Performance
 - **Horizontal API scaling** – Deploy multiple Express instances behind an NGINX/Traefik load balancer.
-- **Caching** – TanStack Query cache on the client, Redis (optional) for server‑side session and rate‑limit storage.
-- **CDN** – Serve static assets (image, JS bundles) via Vercel Edge or Cloudflare.
-- **Database** – Supabase provides read replicas; for high volume, enable connection pooling (pgbouncer).
-- **WebSocket scaling** – Use a Pub/Sub broker (e.g., Redis Streams) to broadcast kitchen updates across multiple API pods.
-- **SSR/ISR** – Next.js ISR for menu pages to keep SEO‑friendly content while allowing fast updates.
+- **Caching** – TanStack Query cache on the client; optional Redis for server‑side session and rate‑limit storage.
+- **CDN** – Serve static assets via Vercel Edge or Cloudflare.
+- **Database** – Supabase read replicas; use connection pooling (pgbouncer) for high volume.
+- **WebSocket scaling** – Pub/Sub broker (e.g., Redis Streams) to broadcast kitchen updates across API pods.
+- **SSR/ISR** – Next.js Incremental Static Regeneration for menu pages.
 
 ---
 
 ## 🔐 Security Hardening Checklist
-- **Authentication** – JWT issued by `/auth/login`; stored in HttpOnly, Secure cookies.
+- **Authentication** – JWT from `/auth/login`, stored in HttpOnly Secure cookies.
 - **Authorization** – Role‑based checks (cashier, manager, chef) in Express middlewares.
-- **Helmet** – Default CSP, Referrer‑Policy, HSTS.
-- **Supabase RLS** – Row‑level policies restrict tables to the owning restaurant.
+- **Helmet** – CSP, Referrer‑Policy, HSTS.
+- **Supabase RLS** – Row‑level policies restrict data to the owning restaurant.
 - **Input Validation** – Zod schemas for every request payload.
 - **Rate Limiting** – `express-rate-limit` (10 req/s per IP).
-- **OWASP Top 10** – Sanitize user‑generated content, enforce strong password policy, enable CSRF protection for state‑changing endpoints.
-- **Secrets Management** – `.env` not committed; use GitHub Secrets or Vault in production.
+- **OWASP Top 10** – Sanitize user input, strong password policy, CSRF protection for state‑changing endpoints.
+- **Secrets Management** – `.env` excluded from repo; use GitHub Secrets or Vault in production.
 
 ---
 
 ## 📈 Observability & DevOps
-- **Logging** – `pino` JSON logs routed to stdout (compatible with Docker & platforms).
-- **Tracing** – OpenTelemetry integration (optional) for end‑to‑end request tracing.
-- **Health Checks** – `/health` endpoint returns `{status:"ok"}`; Kubernetes liveness/readiness probes use it.
-- **Metrics** – Export Prometheus metrics via `express-prometheus-middleware`.
-- **CI/CD** – GitHub Actions workflow builds client & server, runs lint, tests, and deploys to Vercel/Render on merge.
+- **Logging** – `pino` JSON logs to stdout (Docker‑compatible).
+- **Tracing** – Optional OpenTelemetry integration.
+- **Health Checks** – `/health` returns `{"status":"ok"}`; used for Kubernetes probes.
+- **Metrics** – Prometheus metrics via `express-prometheus-middleware`.
+- **CI/CD** – GitHub Actions builds client & server, runs lint & tests, deploys to Vercel/Render on merge.
 - **Git Hooks** – `husky` pre‑commit linting and type‑checking.
 
 ---
 
 ## 🛠️ Best‑Practice Recommendations
 - **Code Style** – Strict TypeScript (`strict:true`), ESLint (Airbnb) + Prettier.
-- **Testing** – Unit tests with Jest, integration tests with SuperTest (API) and React Testing Library (frontend). End‑to‑end flow with Cypress.
-- **Versioning** – Follow SemVer; tag releases as `vMAJOR.MINOR.PATCH`.
-- **Documentation** – Maintain API docs via `swagger-jsdoc`; auto‑generate markdown with `redoc-cli`.
-- **Error Handling** – Central Express error middleware; client displays user‑friendly toast messages.
-- **Dependency Updates** – Use `dependabot` to keep packages current.
+- **Testing** – Jest unit tests, SuperTest integration tests, React Testing Library for UI, Cypress e2e.
+- **Versioning** – SemVer; tag releases as `vMAJOR.MINOR.PATCH`.
+- **Documentation** – API docs via `swagger-jsdoc`; generate markdown with `redoc-cli`.
+- **Error Handling** – Central Express error middleware; user‑friendly toast messages on client.
+- **Dependency Updates** – `dependabot` for automated upgrades.
 - **Accessibility** – Ant Design components with ARIA labels; run a11y audits (Chrome DevTools).
 
 ---
@@ -213,7 +211,7 @@ sequenceDiagram
 | **NEXT_PUBLIC_API_URL** | Base URL for the backend API (client) | `http://localhost:5001/api/v1` |
 | **PORT** | Express server port | `5001` |
 | **SUPABASE_URL** | Supabase project URL | `https://xyz.supabase.co` |
-| **SUPABASE_SERVICE_ROLE_KEY** | Service role secret (server only) | `******` |
+| **SUPABASE_SERVICE_ROLE_KEY** | Service‑role secret (server only) | `******` |
 | **JWT_SECRET** | Secret for signing JWTs | `supersecret` |
 | **REDIS_URL** *(optional)* | Redis instance for caching / rate‑limit | `redis://localhost:6379` |
 
@@ -223,24 +221,24 @@ sequenceDiagram
 git clone https://github.com/Talalilyas1208/restaurant-pos-system.git
 cd restaurant-pos-system
 
-# Backend
+# Backend setup
 cd server && cp .env.example .env && npm ci && cd ..
 
-# Frontend
+# Frontend setup
 cd client && cp .env.example .env && npm ci && cd ..
 
-# Run services (Docker Compose)
+# Run with Docker Compose (recommended for local dev)
 docker compose up -d
 
-# Alternatively, run locally
+# Or run services locally
 npm run dev:server   # inside server/
 npm run dev:client   # inside client/
 ```
 
 ### Production
 - Build Docker images (`docker build -t pos-api ./server` and `docker build -t pos-client ./client`).
-- Deploy to your preferred orchestrator (Docker Swarm, Kubernetes, Render, Fly.io).
-- Configure TLS termination at the load balancer.
+- Deploy to Docker Swarm, Kubernetes, Render, Fly.io, etc.
+- Terminate TLS at the load balancer.
 
 ---
 
@@ -250,7 +248,7 @@ npm run dev:client   # inside client/
 3. Install dependencies and run the full test suite (`npm test && npm run lint`).
 4. Commit using **Conventional Commits**.
 5. Open a PR – link the relevant issue and ensure CI passes.
-6. Make sure to update documentation or diagrams if you add new components.
+6. Update documentation or diagrams when adding new components.
 
 ---
 
