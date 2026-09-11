@@ -95,18 +95,21 @@ export async function checkoutOrderInternal(
         cache.invalidate('orders:');
         cache.invalidate('analytics');
 
+        const mappedCheckoutItems = (orderData.items || []).map((i, idx) => ({
+          id: `oi-${orderRow.id}-${idx}`, orderId: orderRow.id, menuItemId: i.menuItemId,
+          name: i.name, unitPrice: i.unitPrice ?? 0, quantity: i.quantity ?? 1,
+          totalPrice: i.totalPrice ?? (i.unitPrice ?? 0) * (i.quantity ?? 1),
+          selectedModifiers: i.selectedModifiers, specialInstructions: i.specialInstructions, status: 'served' as const,
+        }));
+
         const order: Order = {
           id: orderRow.id, hotelId: orderRow.hotel_id, tableId: orderRow.table_id ?? undefined,
           tableNumber: orderData.tableNumber, orderNumber: orderRow.order_number, orderType: orderRow.order_type,
           source: orderRow.source, status: 'completed', customerName: orderRow.customer_name,
           customerPhone: orderRow.customer_phone ?? undefined, customerNotes: orderRow.customer_notes ?? undefined,
-          items: (orderData.items || []).map((i, idx) => ({
-            id: `oi-${orderRow.id}-${idx}`, orderId: orderRow.id, menuItemId: i.menuItemId,
-            name: i.name, unitPrice: i.unitPrice ?? 0, quantity: i.quantity ?? 1,
-            totalPrice: i.totalPrice ?? (i.unitPrice ?? 0) * (i.quantity ?? 1),
-            selectedModifiers: i.selectedModifiers, specialInstructions: i.specialInstructions, status: 'served' as const,
-          })),
-          subtotal, tax, serviceCharge, discountAmount, total, paymentStatus: 'paid',
+          items: mappedCheckoutItems, subtotal, tax, serviceCharge, discountAmount, total,
+          paymentStatus: 'paid', amountPaid: paymentData.amount, balanceRemaining: 0, version: 1,
+          kotRounds: [{ roundNumber: 1, createdAt: orderRow.created_at, items: mappedCheckoutItems }],
           serverStaffId: orderRow.server_staff_id ?? undefined, serverStaffName: orderRow.server_staff_name ?? undefined,
           createdAt: orderRow.created_at, updatedAt: orderRow.updated_at,
         };
@@ -131,36 +134,23 @@ export async function checkoutOrderInternal(
 
   // Fallback in-memory
   const newId = `ord-${Date.now()}`;
+  const nowIso = new Date().toISOString();
+  const mappedMemItems = (orderData.items || []).map((i, idx) => ({
+    id: `oi-${Date.now()}-${idx}`, orderId: newId, menuItemId: i.menuItemId,
+    name: i.name, unitPrice: i.unitPrice ?? 0, quantity: i.quantity ?? 1,
+    totalPrice: i.totalPrice ?? (i.unitPrice ?? 0) * (i.quantity ?? 1),
+    selectedModifiers: i.selectedModifiers, specialInstructions: i.specialInstructions, status: 'served' as const,
+  }));
   const newOrder: Order = {
-    id: newId,
-    hotelId: orderData.hotelId || hotel.id,
-    tableId: orderData.tableId,
-    tableNumber: orderData.tableNumber,
-    orderNumber,
-    orderType: orderData.orderType || 'dine_in',
-    source: orderData.source || 'pos',
-    status: 'completed',
-    customerName: orderData.customerName || 'Guest',
-    customerPhone: orderData.customerPhone,
-    customerNotes: orderData.customerNotes,
-    serverStaffId: orderData.serverStaffId || 'W-101',
-    serverStaffName: orderData.serverStaffName || 'Marco Rossi',
-    items: (orderData.items || []).map((i, idx) => ({
-      id: `oi-${Date.now()}-${idx}`,
-      orderId: newId,
-      menuItemId: i.menuItemId,
-      name: i.name,
-      unitPrice: i.unitPrice ?? 0,
-      quantity: i.quantity ?? 1,
-      totalPrice: i.totalPrice ?? (i.unitPrice ?? 0) * (i.quantity ?? 1),
-      selectedModifiers: i.selectedModifiers,
-      specialInstructions: i.specialInstructions,
-      status: 'served' as const,
-    })),
-    subtotal, tax, serviceCharge, discountAmount, total,
-    paymentStatus: 'paid',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    id: newId, hotelId: orderData.hotelId || hotel.id, tableId: orderData.tableId,
+    tableNumber: orderData.tableNumber, orderNumber, orderType: orderData.orderType || 'dine_in',
+    source: orderData.source || 'pos', status: 'completed', customerName: orderData.customerName || 'Guest',
+    customerPhone: orderData.customerPhone, customerNotes: orderData.customerNotes,
+    serverStaffId: orderData.serverStaffId || 'W-101', serverStaffName: orderData.serverStaffName || 'Marco Rossi',
+    items: mappedMemItems, subtotal, tax, serviceCharge, discountAmount, total,
+    paymentStatus: 'paid', amountPaid: paymentData.amount, balanceRemaining: 0, version: 1,
+    kotRounds: [{ roundNumber: 1, createdAt: nowIso, items: mappedMemItems }],
+    createdAt: nowIso, updatedAt: nowIso,
   };
   fallbackOrders.unshift(newOrder);
   diskStorage.updateOrders(fallbackOrders);

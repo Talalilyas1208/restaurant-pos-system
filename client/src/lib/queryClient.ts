@@ -2,43 +2,68 @@ import { QueryClient } from '@tanstack/react-query';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 
 // ─── Query Client ─────────────────────────────────────────────────────────────
-// staleTime  — how long cached data is considered "fresh" (no refetch triggered)
-// gcTime     — how long unused data stays in memory before garbage collection
-// retry      — number of automatic retries on network failure
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,      // 30 s default — overridden per-query where needed
-      gcTime: 5 * 60_000,    // Keep unused cache entries in memory for 5 min
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
       refetchOnWindowFocus: true,
-      refetchOnReconnect: true,  // Refetch when coming back online
+      refetchOnReconnect: true,
       retry: 2,
-      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10_000), // Exponential backoff
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10_000),
     },
     mutations: {
-      retry: 0, // Never retry mutations automatically — let the UI handle errors
+      retry: 0,
     },
   },
 });
 
 // ─── Persister ────────────────────────────────────────────────────────────────
-// Persists the React Query cache to localStorage using synchronous storage.
-// This means on a hard page refresh, cached data is instantly available before
-// the first network response arrives — resulting in zero loading spinners.
 export const persister = typeof window !== 'undefined'
   ? createSyncStoragePersister({
       storage: window.localStorage,
       key: 'hotel_pos_rq_cache',
-      throttleTime: 1000, // Write to localStorage at most once per second
+      throttleTime: 1000,
     })
   : undefined;
 
-// ─── Per-resource stale times (exported for use in useQuery calls) ────────────
+// ─── Per-resource stale times ────────────────────────────────────────────────
 export const STALE = {
-  HOTEL:      60_000,  // Hotel info rarely changes
-  MENU:       60_000,  // Menu items and categories
-  TABLES:     15_000,  // Table statuses change moderately
-  ORDERS:      8_000,  // Orders change very frequently (kitchen updates)
-  ANALYTICS:  30_000,  // Dashboard stats
+  HOTEL:      60_000,
+  MENU:       60_000,
+  TABLES:     15_000,
+  ORDERS:      8_000,
+  ANALYTICS:  30_000,
 } as const;
 
+// ─── Query Key Factory ────────────────────────────────────────────────────────
+export const queryKeys = {
+  hotel: {
+    all: ['hotel'] as const,
+    detail: (slug?: string) => ['hotel', slug ?? 'default'] as const,
+  },
+  tables: {
+    all: ['tables'] as const,
+    detail: (id: string) => ['tables', id] as const,
+  },
+  categories: {
+    all: ['categories'] as const,
+  },
+  menu: {
+    all: ['menu'] as const,
+    items: (categoryId?: string) => ['menu', 'items', categoryId ?? 'all'] as const,
+    item: (id: string) => ['menu', 'item', id] as const,
+  },
+  orders: {
+    all: ['orders'] as const,
+    active: ['orders', 'active'] as const,
+    detail: (id: string) => ['orders', id] as const,
+  },
+  staff: {
+    all: ['staff'] as const,
+  },
+  analytics: {
+    all: ['analytics'] as const,
+    summary: (period?: string) => ['analytics', period ?? 'today'] as const,
+  },
+} as const;

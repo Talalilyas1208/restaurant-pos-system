@@ -11,16 +11,17 @@ import {
 import { validate } from '../middlewares/validate.js';
 import { createCategorySchema, createMenuItemSchema, updateMenuItemSchema } from '../schemas/index.js';
 import { mutationLimiter } from '../middlewares/rateLimiter.js';
+import { httpCache } from '../middlewares/httpCache.js';
 
 const router = Router();
 
 // Categories
-router.get('/categories', getCategories);
+router.get('/categories', httpCache(60, 120), getCategories);
 router.post('/categories', mutationLimiter, validate(createCategorySchema), createCategory);
 
 // Items
-router.get('/items', getMenuItems);
-router.get('/items/:id', getMenuItemById);
+router.get('/items', httpCache(30, 120), getMenuItems);
+router.get('/items/:id', httpCache(30, 120), getMenuItemById);
 router.post('/items', mutationLimiter, validate(createMenuItemSchema), createMenuItem);
 router.put('/items/:id', mutationLimiter, validate(updateMenuItemSchema), updateMenuItem);
 router.patch('/items/:id', mutationLimiter, validate(updateMenuItemSchema), updateMenuItem);

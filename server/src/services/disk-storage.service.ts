@@ -41,6 +41,12 @@ class DiskStorageService {
         const raw = fs.readFileSync(STORE_FILE, 'utf-8');
         const parsed = JSON.parse(raw);
         if (parsed && Array.isArray(parsed.orders) && Array.isArray(parsed.tables)) {
+          if (parsed.orders.length === 0 && initialSeed.orders.length > 0) {
+            parsed.orders = initialSeed.orders;
+          }
+          if (parsed.tables.length === 0 && initialSeed.tables.length > 0) {
+            parsed.tables = initialSeed.tables;
+          }
           this.cache = parsed;
           console.log(`💾 DiskStorage: Loaded ${parsed.orders.length} orders & ${parsed.tables.length} tables from persistent disk.`);
           return this.cache!;
