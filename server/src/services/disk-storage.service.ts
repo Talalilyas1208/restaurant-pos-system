@@ -106,26 +106,32 @@ class DiskStorageService {
 
   private async persist(): Promise<void> {
     if (!this.cache) return;
+    const tmpFile = `${STORE_FILE}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`;
     try {
+      this.ensureDataDir();
       this.cache.lastSavedAt = new Date().toISOString();
       const serialized = JSON.stringify(this.cache, null, 2);
-      await fs.promises.writeFile(TMP_FILE, serialized, 'utf-8');
-      await fs.promises.rename(TMP_FILE, STORE_FILE);
+      await fs.promises.writeFile(tmpFile, serialized, 'utf-8');
+      await fs.promises.rename(tmpFile, STORE_FILE);
     } catch (err: any) {
       console.warn('⚠️ DiskStorage atomic write failed:', err?.message || err);
+      try { await fs.promises.unlink(tmpFile); } catch {}
     }
   }
 
   private persistSync(): void {
     if (!this.cache) return;
+    const tmpFile = `${STORE_FILE}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`;
     try {
+      this.ensureDataDir();
       this.cache.lastSavedAt = new Date().toISOString();
       const serialized = JSON.stringify(this.cache, null, 2);
-      fs.writeFileSync(TMP_FILE, serialized, 'utf-8');
-      fs.renameSync(TMP_FILE, STORE_FILE);
+      fs.writeFileSync(tmpFile, serialized, 'utf-8');
+      fs.renameSync(tmpFile, STORE_FILE);
       console.log('💾 DiskStorage: Initial state persisted to server/data/store.json.');
     } catch (err: any) {
       console.warn('⚠️ DiskStorage initial sync write failed:', err?.message || err);
+      try { fs.unlinkSync(tmpFile); } catch {}
     }
   }
 }
